@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - dev
+      - user-management
 
 jobs:
   build-and-push:

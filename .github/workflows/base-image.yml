@@ -7,7 +7,7 @@ on:
       - 'docker/DispatcharrBase'
       - '.github/workflows/base-image.yml'
   pull_request:
-    branches: [ main, dev ]
+    branches: [ main, dev, user-management ]
     paths:
       - 'docker/DispatcharrBase'
       - '.github/workflows/base-image.yml'
