@@ -48,7 +48,7 @@ jobs:
           context: docker
           file: docker/Dockerfile
           push: true
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
           build-args: |
             BRANCH=${{ env.BRANCH }}
             REPO_URL=https://github.com/${{ github.repository }}

@@ -70,7 +70,7 @@ jobs:
           context: .
           file: ./docker/DispatcharrBase
           push: true
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
           tags: |
             ghcr.io/${{ steps.meta.outputs.repo_owner }}/${{ steps.meta.outputs.repo_name }}:base
             ghcr.io/${{ steps.meta.outputs.repo_owner }}/${{ steps.meta.outputs.repo_name }}:base-${{ steps.timestamp.outputs.timestamp }}
