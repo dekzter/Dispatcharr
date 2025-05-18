@@ -14,6 +14,7 @@ import Guide from './pages/Guide';
 import Stats from './pages/Stats';
 import DVR from './pages/DVR';
 import Settings from './pages/Settings';
+import Users from './pages/Users';
 import useAuthStore from './store/auth';
 import FloatingVideo from './components/FloatingVideo';
 import { WebsocketProvider } from './WebSocket';
@@ -75,18 +76,17 @@ const App = () => {
         const loggedIn = await initializeAuth();
         if (loggedIn) {
           await initData();
-          setIsAuthenticated(true);
         } else {
           await logout();
         }
       } catch (error) {
-        console.error("Auth check failed:", error);
+        console.error('Auth check failed:', error);
         await logout();
       }
     };
 
     checkAuth();
-  }, [initializeAuth, initData, setIsAuthenticated, logout]);
+  }, [initializeAuth, initData, logout]);
 
   return (
     <MantineProvider
@@ -132,6 +132,7 @@ const App = () => {
                         <Route path="/guide" element={<Guide />} />
                         <Route path="/dvr" element={<DVR />} />
                         <Route path="/stats" element={<Stats />} />
+                        <Route path="/users" element={<Users />} />
                         <Route path="/settings" element={<Settings />} />
                       </>
                     ) : (

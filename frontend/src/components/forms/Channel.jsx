@@ -36,6 +36,7 @@ import { ListOrdered, SquarePlus, SquareX, X } from 'lucide-react';
 import useEPGsStore from '../../store/epgs';
 import { Dropzone } from '@mantine/dropzone';
 import { FixedSizeList as List } from 'react-window';
+import { USER_LEVELS, USER_LEVEL_LABELS } from '../../constants';
 
 const ChannelForm = ({ channel = null, isOpen, onClose }) => {
   const theme = useMantineTheme();
@@ -94,13 +95,17 @@ const ChannelForm = ({ channel = null, isOpen, onClose }) => {
   const formik = useFormik({
     initialValues: {
       name: '',
-      channel_number: '',  // Change from 0 to empty string for consistency
-      channel_group_id: Object.keys(channelGroups).length > 0 ? Object.keys(channelGroups)[0] : '',
+      channel_number: '', // Change from 0 to empty string for consistency
+      channel_group_id:
+        Object.keys(channelGroups).length > 0
+          ? Object.keys(channelGroups)[0]
+          : '',
       stream_profile_id: '0',
       tvg_id: '',
       tvc_guide_stationid: '',
       epg_data_id: '',
       logo_id: '',
+      user_level: '0',
     },
     validationSchema: Yup.object({
       name: Yup.string().required('Name is required'),
@@ -124,7 +129,8 @@ const ChannelForm = ({ channel = null, isOpen, onClose }) => {
         formattedValues.tvg_id = formattedValues.tvg_id || null;
 
         // Ensure tvc_guide_stationid is properly included (no empty strings)
-        formattedValues.tvc_guide_stationid = formattedValues.tvc_guide_stationid || null;
+        formattedValues.tvc_guide_stationid =
+          formattedValues.tvc_guide_stationid || null;
 
         if (channel) {
           // If there's an EPG to set, use our enhanced endpoint
@@ -183,7 +189,8 @@ const ChannelForm = ({ channel = null, isOpen, onClose }) => {
 
       formik.setValues({
         name: channel.name || '',
-        channel_number: channel.channel_number !== null ? channel.channel_number : '',
+        channel_number:
+          channel.channel_number !== null ? channel.channel_number : '',
         channel_group_id: channel.channel_group_id
           ? `${channel.channel_group_id}`
           : '',
@@ -194,6 +201,7 @@ const ChannelForm = ({ channel = null, isOpen, onClose }) => {
         tvc_guide_stationid: channel.tvc_guide_stationid || '',
         epg_data_id: channel.epg_data_id ?? '',
         logo_id: channel.logo_id ? `${channel.logo_id}` : '',
+        user_level: `${channel.user_level}`,
       });
 
       setChannelStreams(channel.streams || []);
@@ -353,7 +361,7 @@ const ChannelForm = ({ channel = null, isOpen, onClose }) => {
       // Preserve all current form values while updating just the channel_group_id
       formik.setValues({
         ...formik.values,
-        channel_group_id: `${newGroup.id}`
+        channel_group_id: `${newGroup.id}`,
       });
     }
   };
@@ -542,6 +550,23 @@ const ChannelForm = ({ channel = null, isOpen, onClose }) => {
                 )}
                 size="xs"
               />
+
+              <Select
+                label="User Level Access"
+                data={Object.entries(USER_LEVELS).map(([label, value]) => {
+                  return {
+                    label: USER_LEVEL_LABELS[value],
+                    value: `${value}`,
+                  };
+                })}
+                value={formik.values.user_level}
+                onChange={(value) => {
+                  formik.setFieldValue('user_level', value);
+                }}
+                error={
+                  formik.errors.user_level ? formik.touched.user_level : ''
+                }
+              />
             </Stack>
 
             <Divider size="sm" orientation="vertical" />
@@ -667,9 +692,9 @@ const ChannelForm = ({ channel = null, isOpen, onClose }) => {
                     : ''
                 }
                 size="xs"
-                step={0.1}  // Add step prop to allow decimal inputs
-                precision={1}  // Specify decimal precision
-                removeTrailingZeros  // Optional: remove trailing zeros for cleaner display
+                step={0.1} // Add step prop to allow decimal inputs
+                precision={1} // Specify decimal precision
+                removeTrailingZeros // Optional: remove trailing zeros for cleaner display
               />
 
               <TextInput
@@ -688,7 +713,11 @@ const ChannelForm = ({ channel = null, isOpen, onClose }) => {
                 label="Gracenote StationId"
                 value={formik.values.tvc_guide_stationid}
                 onChange={formik.handleChange}
-                error={formik.errors.tvc_guide_stationid ? formik.touched.tvc_guide_stationid : ''}
+                error={
+                  formik.errors.tvc_guide_stationid
+                    ? formik.touched.tvc_guide_stationid
+                    : ''
+                }
                 size="xs"
               />
 

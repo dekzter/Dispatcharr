@@ -2,6 +2,7 @@ from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
+from apps.accounts.permissions import permission_classes_by_action
 from django.http import JsonResponse, HttpResponseForbidden, HttpResponse
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
@@ -16,18 +17,26 @@ from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
 
+
 @login_required
 def hdhr_dashboard_view(request):
     """Render the HDHR management page."""
     hdhr_devices = HDHRDevice.objects.all()
     return render(request, "hdhr/hdhr.html", {"hdhr_devices": hdhr_devices})
 
+
 # 🔹 1) HDHomeRun Device API
 class HDHRDeviceViewSet(viewsets.ModelViewSet):
     """Handles CRUD operations for HDHomeRun devices"""
+
     queryset = HDHRDevice.objects.all()
     serializer_class = HDHRDeviceSerializer
-    permission_classes = [IsAuthenticated]
+
+    def get_permissions(self):
+        try:
+            return [perm() for perm in permission_classes_by_action[self.action]]
+        except KeyError:
+            return [IsAuthenticated()]
 
 
 # 🔹 2) Discover API
@@ -36,10 +45,10 @@ class DiscoverAPIView(APIView):
 
     @swagger_auto_schema(
         operation_description="Retrieve HDHomeRun device discovery information",
-        responses={200: openapi.Response("HDHR Discovery JSON")}
+        responses={200: openapi.Response("HDHR Discovery JSON")},
     )
     def get(self, request):
-        base_url = request.build_absolute_uri('/hdhr/').rstrip('/')
+        base_url = request.build_absolute_uri("/hdhr/").rstrip("/")
         device = HDHRDevice.objects.first()
 
         if not device:
@@ -75,15 +84,15 @@ class LineupAPIView(APIView):
 
     @swagger_auto_schema(
         operation_description="Retrieve the available channel lineup",
-        responses={200: openapi.Response("Channel Lineup JSON")}
+        responses={200: openapi.Response("Channel Lineup JSON")},
     )
     def get(self, request):
-        channels = Channel.objects.all().order_by('channel_number')
+        channels = Channel.objects.all().order_by("channel_number")
         lineup = [
             {
                 "GuideNumber": str(ch.channel_number),
                 "GuideName": ch.name,
-                "URL": request.build_absolute_uri(f"/proxy/ts/stream/{ch.uuid}")
+                "URL": request.build_absolute_uri(f"/proxy/ts/stream/{ch.uuid}"),
             }
             for ch in channels
         ]
@@ -96,14 +105,14 @@ class LineupStatusAPIView(APIView):
 
     @swagger_auto_schema(
         operation_description="Retrieve the HDHomeRun lineup status",
-        responses={200: openapi.Response("Lineup Status JSON")}
+        responses={200: openapi.Response("Lineup Status JSON")},
     )
     def get(self, request):
         data = {
             "ScanInProgress": 0,
             "ScanPossible": 0,
             "Source": "Cable",
-            "SourceList": ["Cable"]
+            "SourceList": ["Cable"],
         }
         return JsonResponse(data)
 
@@ -114,10 +123,10 @@ class HDHRDeviceXMLAPIView(APIView):
 
     @swagger_auto_schema(
         operation_description="Retrieve the HDHomeRun device XML configuration",
-        responses={200: openapi.Response("HDHR Device XML")}
+        responses={200: openapi.Response("HDHR Device XML")},
     )
     def get(self, request):
-        base_url = request.build_absolute_uri('/hdhr/').rstrip('/')
+        base_url = request.build_absolute_uri("/hdhr/").rstrip("/")
 
         xml_response = f"""<?xml version="1.0" encoding="utf-8"?>
         <root>

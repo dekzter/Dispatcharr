@@ -21,10 +21,6 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 # --- Create Python virtual environment ---
 RUN python3.13 -m venv $VIRTUAL_ENV && $VIRTUAL_ENV/bin/pip install --upgrade pip
 
-# --- Install Python dependencies ---
-COPY requirements.txt /tmp/requirements.txt
-RUN $VIRTUAL_ENV/bin/pip install --no-cache-dir -r /tmp/requirements.txt && rm /tmp/requirements.txt
-
 # --- Set up Redis 7.x ---
 RUN curl -fsSL https://packages.redis.io/gpg | gpg --dearmor -o /usr/share/keyrings/redis-archive-keyring.gpg && \
     echo "deb [signed-by=/usr/share/keyrings/redis-archive-keyring.gpg] https://packages.redis.io/deb $(lsb_release -cs) main" | \

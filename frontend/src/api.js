@@ -9,6 +9,7 @@ import useStreamProfilesStore from './store/streamProfiles';
 import useSettingsStore from './store/settings';
 import { notifications } from '@mantine/notifications';
 import useChannelsTableStore from './store/channelsTable';
+import useUsersStore from './store/users';
 
 // If needed, you can set a base host or keep it empty if relative requests
 const host = import.meta.env.DEV
@@ -1390,6 +1391,61 @@ export default class API {
     } catch (e) {
       errorNotification('Failed to fetch channel details', e);
       return null;
+    }
+  }
+
+  static async me() {
+    return await request(`${host}/api/accounts/users/me/`);
+  }
+
+  static async getUsers() {
+    try {
+      const response = await request(`${host}/api/accounts/users/`);
+      return response;
+    } catch (e) {
+      errorNotification('Failed to fetch users', e);
+    }
+  }
+
+  static async createUser(body) {
+    try {
+      const response = await request(`${host}/api/accounts/users/`, {
+        method: 'POST',
+        body,
+      });
+
+      useUsersStore.getState().addUser(response);
+
+      return response;
+    } catch (e) {
+      errorNotification('Failed to fetch users', e);
+    }
+  }
+
+  static async updateUser(id, body) {
+    try {
+      const response = await request(`${host}/api/accounts/users/${id}/`, {
+        method: 'PATCH',
+        body,
+      });
+
+      useUsersStore.getState().updateUser(response);
+
+      return response;
+    } catch (e) {
+      errorNotification('Failed to fetch users', e);
+    }
+  }
+
+  static async deleteUser(id) {
+    try {
+      await request(`${host}/api/accounts/users/${id}/`, {
+        method: 'DELETE',
+      });
+
+      useUsersStore.getState().removeUser(id);
+    } catch (e) {
+      errorNotification('Failed to delete user', e);
     }
   }
 }

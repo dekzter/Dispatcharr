@@ -1,5 +1,5 @@
 from django.urls import path, re_path, include
-from .views import generate_m3u, generate_epg
+from .views import generate_m3u, generate_epg, xc_get
 from core.views import stream_view
 
 app_name = 'output'

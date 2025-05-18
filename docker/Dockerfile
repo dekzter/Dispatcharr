@@ -31,6 +31,9 @@ RUN rm -rf /app/frontend
 # Copy built frontend assets
 COPY --from=frontend-builder /app/frontend/dist /app/frontend/dist
 
+# --- Install Python dependencies ---
+RUN cd /app && pip install -r requirements.txt
+
 # Run Django collectstatic
 RUN python manage.py collectstatic --noinput
 

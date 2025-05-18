@@ -7,24 +7,29 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('django_celery_beat', '0019_alter_periodictasks_options'),
-        ('m3u', '0004_m3uaccount_stream_profile'),
+        ("django_celery_beat", "0019_alter_periodictasks_options"),
+        ("m3u", "0004_m3uaccount_stream_profile"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='m3uaccount',
-            name='custom_properties',
+            model_name="m3uaccount",
+            name="custom_properties",
             field=models.TextField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='m3uaccount',
-            name='refresh_interval',
+            model_name="m3uaccount",
+            name="refresh_interval",
             field=models.IntegerField(default=24),
         ),
         migrations.AddField(
-            model_name='m3uaccount',
-            name='refresh_task',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to='django_celery_beat.periodictask'),
+            model_name="m3uaccount",
+            name="refresh_task",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                to="django_celery_beat.periodictask",
+            ),
         ),
     ]

@@ -36,6 +36,8 @@ import {
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { shallow } from 'zustand/shallow';
+import useAuthStore from '../../store/auth';
+import { USER_LEVELS } from '../../constants';
 
 const RowDragHandleCell = ({ rowId }) => {
   const { attributes, listeners, setNodeRef } = useDraggable({
@@ -120,6 +122,7 @@ const ChannelStreams = ({ channel, isExpanded }) => {
     shallow
   );
   const playlists = usePlaylistsStore((s) => s.playlists);
+  const authUser = useAuthStore((s) => s.user);
 
   const [data, setData] = useState(channelStreams || []);
 
@@ -168,6 +171,7 @@ const ChannelStreams = ({ channel, isExpanded }) => {
                 <SquareMinus
                   color={theme.tailwind.red[6]}
                   onClick={() => removeStream(row.original)}
+                  disabled={authUser.user_level != USER_LEVELS.ADMIN}
                 />
               </ActionIcon>
             </Center>
@@ -192,7 +196,11 @@ const ChannelStreams = ({ channel, isExpanded }) => {
     getCoreRowModel: getCoreRowModel(),
   });
 
-  function handleDragEnd(event) {
+  const handleDragEnd = (event) => {
+    if (authUser.user_level != USER_LEVELS.ADMIN) {
+      return;
+    }
+
     const { active, over } = event;
     if (active && over && active.id !== over.id) {
       setData((data) => {
@@ -211,7 +219,7 @@ const ChannelStreams = ({ channel, isExpanded }) => {
         return retval; //this is just a splice util
       });
     }
-  }
+  };
 
   const sensors = useSensors(
     useSensor(MouseSensor, {}),

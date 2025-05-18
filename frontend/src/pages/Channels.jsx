@@ -3,8 +3,20 @@ import ChannelsTable from '../components/tables/ChannelsTable';
 import StreamsTable from '../components/tables/StreamsTable';
 import { Box } from '@mantine/core';
 import { Allotment } from 'allotment';
+import { USER_LEVELS } from '../constants';
+import useAuthStore from '../store/auth';
 
 const ChannelsPage = () => {
+  const authUser = useAuthStore((s) => s.user);
+
+  if (authUser.user_level <= USER_LEVELS.READ_ONLY) {
+    return (
+      <Box style={{ padding: 10 }}>
+        <ChannelsTable />
+      </Box>
+    );
+  }
+
   return (
     <div style={{ height: '100vh', width: '100%', display: 'flex' }}>
       <Allotment

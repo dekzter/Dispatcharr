@@ -6,6 +6,9 @@ import usePlaylistsStore from './playlists';
 import useEPGsStore from './epgs';
 import useStreamProfilesStore from './streamProfiles';
 import useUserAgentsStore from './userAgents';
+import useUsersStore from './users';
+import API from '../api';
+import { USER_LEVELS } from '../constants';
 
 const decodeToken = (token) => {
   if (!token) return null;
@@ -26,11 +29,17 @@ const useAuthStore = create((set, get) => ({
   user: {
     username: '',
     email: '',
+    user_level: '',
   },
   isLoading: false,
   error: null,
 
   initData: async () => {
+    const user = await API.me();
+    if (user.user_level <= USER_LEVELS.STREAMER) {
+      throw new Error('Unauthorized');
+    }
+
     // Ensure settings are loaded first
     await useSettingsStore.getState().fetchSettings();
 
@@ -47,8 +56,14 @@ const useAuthStore = create((set, get) => ({
         useStreamProfilesStore.getState().fetchProfiles(),
         useUserAgentsStore.getState().fetchUserAgents(),
       ]);
+
+      if (user.user_level >= USER_LEVELS.ADMIN) {
+        await Promise.all([useUsersStore.getState().fetchUsers()]);
+      }
+
+      set({ user, isAuthenticated: true });
     } catch (error) {
-      console.error("Error initializing data:", error);
+      console.error('Error initializing data:', error);
     }
   },
 
@@ -83,7 +98,6 @@ const useAuthStore = create((set, get) => ({
           accessToken: response.access,
           refreshToken: response.refresh,
           tokenExpiration: expiration, // 1 hour from now
-          isAuthenticated: true,
         });
         // Store in localStorage
         localStorage.setItem('accessToken', response.access);
@@ -128,6 +142,7 @@ const useAuthStore = create((set, get) => ({
       refreshToken: null,
       tokenExpiration: null,
       isAuthenticated: false,
+      user: null,
     });
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');

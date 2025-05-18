@@ -51,6 +51,8 @@ import ChannelsTableOnboarding from './ChannelsTable/ChannelsTableOnboarding';
 import ChannelTableHeader from './ChannelsTable/ChannelTableHeader';
 import useWarningsStore from '../../store/warnings';
 import ConfirmationDialog from '../ConfirmationDialog';
+import useAuthStore from '../../store/auth';
+import { USER_LEVELS } from '../../constants';
 
 const m3uUrlBase = `${window.location.protocol}//${window.location.host}/output/m3u`;
 const epgUrlBase = `${window.location.protocol}//${window.location.host}/output/epg`;
@@ -108,6 +110,8 @@ const ChannelRowActions = React.memo(
     const channelUuid = row.original.uuid;
     const [tableSize, _] = useLocalStorage('table-size', 'default');
 
+    const authUser = useAuthStore((s) => s.user);
+
     const onEdit = useCallback(() => {
       // Use the ID directly to avoid issues with filtered tables
       console.log(`Editing channel ID: ${channelId}`);
@@ -141,6 +145,7 @@ const ChannelRowActions = React.memo(
             variant="transparent"
             color={theme.tailwind.yellow[3]}
             onClick={onEdit}
+            disabled={authUser.user_level != USER_LEVELS.ADMIN}
           >
             <SquarePen size="18" />
           </ActionIcon>
@@ -150,6 +155,7 @@ const ChannelRowActions = React.memo(
             variant="transparent"
             color={theme.tailwind.red[6]}
             onClick={onDelete}
+            disabled={authUser.user_level != USER_LEVELS.ADMIN}
           >
             <SquareMinus size="18" />
           </ActionIcon>
@@ -181,6 +187,7 @@ const ChannelRowActions = React.memo(
               </Menu.Item>
               <Menu.Item
                 onClick={onRecord}
+                disabled={authUser.user_level != USER_LEVELS.ADMIN}
                 leftSection={
                   <div
                     style={{
@@ -203,7 +210,7 @@ const ChannelRowActions = React.memo(
   }
 );
 
-const ChannelsTable = ({ }) => {
+const ChannelsTable = ({}) => {
   const theme = useMantineTheme();
 
   /**
@@ -596,8 +603,12 @@ const ChannelsTable = ({ }) => {
         cell: ({ getValue }) => {
           const value = getValue();
           // Format as integer if no decimal component
-          const formattedValue = value !== null && value !== undefined ?
-            (value === Math.floor(value) ? Math.floor(value) : value) : '';
+          const formattedValue =
+            value !== null && value !== undefined
+              ? value === Math.floor(value)
+                ? Math.floor(value)
+                : value
+              : '';
 
           return (
             <Flex justify="flex-end" style={{ width: '100%' }}>
@@ -797,8 +808,8 @@ const ChannelsTable = ({ }) => {
       return hasStreams
         ? {} // Default style for channels with streams
         : {
-          className: 'no-streams-row', // Add a class instead of background color
-        };
+            className: 'no-streams-row', // Add a class instead of background color
+          };
     },
   });
 

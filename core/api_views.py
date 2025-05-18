@@ -4,7 +4,11 @@ from rest_framework import viewsets, status
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from .models import UserAgent, StreamProfile, CoreSettings, STREAM_HASH_KEY
-from .serializers import UserAgentSerializer, StreamProfileSerializer, CoreSettingsSerializer
+from .serializers import (
+    UserAgentSerializer,
+    StreamProfileSerializer,
+    CoreSettingsSerializer,
+)
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import api_view, permission_classes
 from drf_yasg.utils import swagger_auto_schema
@@ -13,25 +17,31 @@ import requests
 import os
 from core.tasks import rehash_streams
 
+
 class UserAgentViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows user agents to be viewed, created, edited, or deleted.
     """
+
     queryset = UserAgent.objects.all()
     serializer_class = UserAgentSerializer
+
 
 class StreamProfileViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows stream profiles to be viewed, created, edited, or deleted.
     """
+
     queryset = StreamProfile.objects.all()
     serializer_class = StreamProfileSerializer
+
 
 class CoreSettingsViewSet(viewsets.ModelViewSet):
     """
     API endpoint for editing core settings.
     This is treated as a singleton: only one instance should exist.
     """
+
     queryset = CoreSettings.objects.all()
     serializer_class = CoreSettingsSerializer
 
@@ -39,21 +49,20 @@ class CoreSettingsViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         response = super().update(request, *args, **kwargs)
         if instance.key == STREAM_HASH_KEY:
-            if instance.value != request.data['value']:
-                rehash_streams.delay(request.data['value'].split(','))
+            if instance.value != request.data["value"]:
+                rehash_streams.delay(request.data["value"].split(","))
 
         return response
 
+
 @swagger_auto_schema(
-    method='get',
+    method="get",
     operation_description="Endpoint for environment details",
-    responses={200: "Environment variables"}
+    responses={200: "Environment variables"},
 )
-@api_view(['GET'])
+@api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def environment(request):
-
-
     public_ip = None
     local_ip = None
     country_code = None
@@ -88,25 +97,31 @@ def environment(request):
             country_code = None
             country_name = None
 
-    return Response({
-        'authenticated': True,
-        'public_ip': public_ip,
-        'local_ip': local_ip,
-        'country_code': country_code,
-        'country_name': country_name,
-        'env_mode': "dev" if os.getenv('DISPATCHARR_ENV') == "dev" else "prod",
-    })
+    return Response(
+        {
+            "authenticated": True,
+            "public_ip": public_ip,
+            "local_ip": local_ip,
+            "country_code": country_code,
+            "country_name": country_name,
+            "env_mode": "dev" if os.getenv("DISPATCHARR_ENV") == "dev" else "prod",
+        }
+    )
+
 
 @swagger_auto_schema(
-    method='get',
+    method="get",
     operation_description="Get application version information",
-    responses={200: "Version information"}
+    responses={200: "Version information"},
 )
-@api_view(['GET'])
+@api_view(["GET"])
 def version(request):
     # Import version information
     from version import __version__, __timestamp__
-    return Response({
-        'version': __version__,
-        'timestamp': __timestamp__,
-    })
+
+    return Response(
+        {
+            "version": __version__,
+            "timestamp": __timestamp__,
+        }
+    )

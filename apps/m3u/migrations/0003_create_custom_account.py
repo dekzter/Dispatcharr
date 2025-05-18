@@ -3,6 +3,7 @@
 from django.db import migrations
 from core.models import CoreSettings
 
+
 def create_custom_account(apps, schema_editor):
     default_user_agent_id = CoreSettings.get_default_user_agent_id()
 
@@ -18,7 +19,7 @@ def create_custom_account(apps, schema_editor):
     M3UAccountProfile = apps.get_model("m3u", "M3UAccountProfile")
     M3UAccountProfile.objects.create(
         m3u_account=m3u_account,
-        name=f'{m3u_account.name} Default',
+        name=f"{m3u_account.name} Default",
         max_streams=m3u_account.max_streams,
         is_default=True,
         is_active=True,
@@ -26,10 +27,12 @@ def create_custom_account(apps, schema_editor):
         replace_pattern="$1",
     )
 
+
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('m3u', '0002_m3uaccount_locked'),
+        ("m3u", "0002_m3uaccount_locked"),
+        ("core", "0004_preload_core_settings"),
     ]
 
     operations = [

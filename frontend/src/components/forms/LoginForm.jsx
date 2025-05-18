@@ -5,17 +5,18 @@ import { Paper, Title, TextInput, Button, Center, Stack } from '@mantine/core';
 
 const LoginForm = () => {
   const login = useAuthStore((s) => s.login);
+  const logout = useAuthStore((s) => s.logout);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const initData = useAuthStore((s) => s.initData);
 
   const navigate = useNavigate(); // Hook to navigate to other routes
   const [formData, setFormData] = useState({ username: '', password: '' });
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      navigate('/channels');
-    }
-  }, [isAuthenticated, navigate]);
+  // useEffect(() => {
+  //   if (isAuthenticated) {
+  //     navigate('/channels');
+  //   }
+  // }, [isAuthenticated, navigate]);
 
   const handleInputChange = (e) => {
     setFormData({
@@ -27,8 +28,13 @@ const LoginForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     await login(formData);
-    initData();
-    navigate('/channels'); // Or any other route you'd like
+
+    try {
+      await initData();
+      navigate('/channels');
+    } catch (e) {
+      console.log(`Failed to login: ${e}`);
+    }
   };
 
   return (
@@ -60,7 +66,7 @@ const LoginForm = () => {
               name="password"
               value={formData.password}
               onChange={handleInputChange}
-              required
+              // required
             />
 
             <Button type="submit" mt="sm">

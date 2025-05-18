@@ -17,7 +17,6 @@ logger = get_logger()
 
 def get_stream_object(id: str):
     try:
-        uuid_obj = UUID(id, version=4)
         logger.info(f"Fetching channel ID {id}")
         return get_object_or_404(Channel, uuid=id)
     except:

@@ -10,6 +10,8 @@ import {
   Copy,
   ChartLine,
   Video,
+  Ellipsis,
+  LogOut,
 } from 'lucide-react';
 import {
   Avatar,
@@ -21,6 +23,7 @@ import {
   UnstyledButton,
   TextInput,
   ActionIcon,
+  Menu,
 } from '@mantine/core';
 import logo from '../images/logo.png';
 import useChannelsStore from '../store/channels';
@@ -28,6 +31,7 @@ import './sidebar.css';
 import useSettingsStore from '../store/settings';
 import useAuthStore from '../store/auth'; // Add this import
 import API from '../api';
+import { USER_LEVELS } from '../constants';
 
 const NavLink = ({ item, isActive, collapsed }) => {
   return (
@@ -63,11 +67,63 @@ const NavLink = ({ item, isActive, collapsed }) => {
 
 const Sidebar = ({ collapsed, toggleDrawer, drawerWidth, miniDrawerWidth }) => {
   const location = useLocation();
+
   const channels = useChannelsStore((s) => s.channels);
   const environment = useSettingsStore((s) => s.environment);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const authUser = useAuthStore((s) => s.user);
+  const logout = useAuthStore((s) => s.logout);
+
   const publicIPRef = useRef(null);
-  const [appVersion, setAppVersion] = useState({ version: '', timestamp: null });
+
+  const [appVersion, setAppVersion] = useState({
+    version: '',
+    timestamp: null,
+  });
+
+  // Navigation Items
+  const navItems =
+    authUser && authUser.user_level == USER_LEVELS.ADMIN
+      ? [
+          {
+            label: 'Channels',
+            icon: <ListOrdered size={20} />,
+            path: '/channels',
+            badge: `(${Object.keys(channels).length})`,
+          },
+          {
+            label: 'M3U & EPG Manager',
+            icon: <Play size={20} />,
+            path: '/sources',
+          },
+          { label: 'TV Guide', icon: <LayoutGrid size={20} />, path: '/guide' },
+          { label: 'DVR', icon: <Video size={20} />, path: '/dvr' },
+          { label: 'Stats', icon: <ChartLine size={20} />, path: '/stats' },
+          {
+            label: 'Users',
+            icon: <LucideSettings size={20} />,
+            path: '/users',
+          },
+          {
+            label: 'Settings',
+            icon: <LucideSettings size={20} />,
+            path: '/settings',
+          },
+        ]
+      : [
+          {
+            label: 'Channels',
+            icon: <ListOrdered size={20} />,
+            path: '/channels',
+            badge: `(${Object.keys(channels).length})`,
+          },
+          { label: 'TV Guide', icon: <LayoutGrid size={20} />, path: '/guide' },
+          {
+            label: 'Settings',
+            icon: <LucideSettings size={20} />,
+            path: '/settings',
+          },
+        ];
 
   // Fetch environment settings including version on component mount
   useEffect(() => {
@@ -99,24 +155,6 @@ const Sidebar = ({ collapsed, toggleDrawer, drawerWidth, miniDrawerWidth }) => {
 
     fetchVersion();
   }, []);
-  // Navigation Items
-  const navItems = [
-    {
-      label: 'Channels',
-      icon: <ListOrdered size={20} />,
-      path: '/channels',
-      badge: `(${Object.keys(channels).length})`,
-    },
-    { label: 'M3U & EPG Manager', icon: <Play size={20} />, path: '/sources' },
-    { label: 'TV Guide', icon: <LayoutGrid size={20} />, path: '/guide' },
-    { label: 'DVR', icon: <Video size={20} />, path: '/dvr' },
-    { label: 'Stats', icon: <ChartLine size={20} />, path: '/stats' },
-    {
-      label: 'Settings',
-      icon: <LucideSettings size={20} />,
-      path: '/settings',
-    },
-  ];
 
   const copyPublicIP = async () => {
     try {
@@ -133,6 +171,11 @@ const Sidebar = ({ collapsed, toggleDrawer, drawerWidth, miniDrawerWidth }) => {
         document.execCommand('copy');
       }
     }
+  };
+
+  const onLogout = () => {
+    logout();
+    window.location.reload();
   };
 
   return (
@@ -243,7 +286,7 @@ const Sidebar = ({ collapsed, toggleDrawer, drawerWidth, miniDrawerWidth }) => {
             )}
 
             <Avatar src="https://via.placeholder.com/40" radius="xl" />
-            {!collapsed && (
+            {!collapsed && authUser && (
               <Group
                 style={{
                   flex: 1,
@@ -252,11 +295,28 @@ const Sidebar = ({ collapsed, toggleDrawer, drawerWidth, miniDrawerWidth }) => {
                 }}
               >
                 <Text size="sm" color="white">
-                  John Doe
+                  {authUser.username}
                 </Text>
-                <Text size="sm" color="white">
-                  •••
-                </Text>
+
+                <Menu>
+                  <Menu.Target>
+                    <ActionIcon variant="transparent" size={18} color="white">
+                      <Ellipsis size="18" />
+                    </ActionIcon>
+                  </Menu.Target>
+
+                  <Menu.Dropdown>
+                    <Menu.Item leftSection={<LogOut size="14" />}>
+                      <UnstyledButton
+                        variant="unstyled"
+                        size="xs"
+                        onClick={onLogout}
+                      >
+                        <Text size="xs">Log Out</Text>
+                      </UnstyledButton>
+                    </Menu.Item>
+                  </Menu.Dropdown>
+                </Menu>
               </Group>
             )}
           </Group>
