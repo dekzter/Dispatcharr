@@ -139,7 +139,7 @@ export default function AssignChannelNumbersForm({
         </DialogHeader>
 
         <form onSubmit={handleSubmit}>
-          <div className="space-y-4 py-2">
+          <div className="space-y-4 py-4">
             <Label>Matching Mode</Label>
             <RadioGroup
               defaultValue="default"

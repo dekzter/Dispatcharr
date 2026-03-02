@@ -13,6 +13,7 @@
     "@dnd-kit/modifiers": "^9.0.0",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
+    "@hookform/resolvers": "^5.2.2",
     "@react-router/node": "7.12.0",
     "@react-router/serve": "7.12.0",
     "@tanstack/react-table": "^8.21.3",
@@ -30,10 +31,13 @@
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-draggable": "^4.5.0",
+    "react-hook-form": "^7.71.2",
     "react-router": "7.12.0",
+    "react-window": "^2.2.7",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.5.0",
     "video.js": "^8.23.7",
+    "yup": "^1.7.1",
     "zustand": "^5.0.11"
   },
   "devDependencies": {

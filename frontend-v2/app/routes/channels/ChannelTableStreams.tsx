@@ -24,7 +24,6 @@ import {
   MouseSensor,
   TouchSensor,
   closestCenter,
-  useDraggable,
   useSensor,
   useSensors,
 } from '@dnd-kit/core';
@@ -53,11 +52,7 @@ import {
 } from '~/components/ui/collapsible';
 import { TableCell, TableRow } from '~/components/ui/table';
 
-const RowDragHandleCell = ({ rowId }) => {
-  const { attributes, listeners, setNodeRef } = useDraggable({
-    id: rowId,
-  });
-
+const RowDragHandleCell = ({ attributes, listeners }) => {
   return (
     <div
       className="flex items-center justify-center"
@@ -66,9 +61,9 @@ const RowDragHandleCell = ({ rowId }) => {
       <Button
         size="xs"
         variant="ghost"
-        ref={setNodeRef}
         {...listeners}
         {...attributes}
+        style={{ cursor: 'grab' }}
       >
         <GripHorizontal color="white" />
       </Button>
@@ -78,7 +73,7 @@ const RowDragHandleCell = ({ rowId }) => {
 
 // Row Component
 const DraggableRow = ({ row, index }) => {
-  const { transform, transition, setNodeRef, isDragging } = useSortable({
+  const { transform, transition, setNodeRef, isDragging, attributes, listeners } = useSortable({
     id: row.original.id,
   });
 
@@ -94,9 +89,12 @@ const DraggableRow = ({ row, index }) => {
       ref={setNodeRef}
       key={row.id}
       className='flex'
+      style={style}
     >
       {row.getVisibleCells().map((cell) => {
         const isStale = row.original.is_stale;
+        // Pass drag handlers to the drag handle cell
+        const cellProps = cell.column.id === 'drag-handle' ? { attributes, listeners } : {};
         return (
           <div
             key={cell.id}
@@ -114,7 +112,10 @@ const DraggableRow = ({ row, index }) => {
           >
             <div className="flex items-center" style={{ height: '100%' }}>
               <div>
-                {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                {cell.column.id === 'drag-handle'
+                  ? flexRender(cell.column.columnDef.cell, { ...cell.getContext(), ...cellProps })
+                  : flexRender(cell.column.columnDef.cell, cell.getContext())
+                }
               </div>
             </div>
           </div>
@@ -327,7 +328,7 @@ const ChannelStreams = ({ channel, isExpanded }) => {
         {
           id: 'drag-handle',
           header: 'Move',
-          cell: ({ row }) => <RowDragHandleCell rowId={row.id} />,
+          cell: ({ attributes, listeners }) => <RowDragHandleCell attributes={attributes} listeners={listeners} />,
           size: 30,
         },
         {

@@ -25,7 +25,7 @@ function getBaseUrlFromRequest(request: Request): string {
  * Get the base URL from window (client-side)
  */
 function getBaseUrlFromWindow(): string {
-  if (typeof window === "undefined") return "";
+  if (typeof window === 'undefined') return '';
 
   const protocol = window.location.protocol;
   const hostname = window.location.hostname;
@@ -49,29 +49,29 @@ export function getBaseUrl(request?: Request): string {
   return getBaseUrlFromWindow();
 }
 
-/**
- * Get the M3U output URL base
- */
-export function getM3uUrlBase(request?: Request): string {
-  const base = getBaseUrl(request);
-  return base ? `${base}/output/m3u` : "";
-}
+// /**
+//  * Get the M3U output URL base
+//  */
+// export function getM3uUrlBase(request?: Request): string {
+//   const base = getBaseUrl(request);
+//   return base ? `${base}/output/m3u` : "";
+// }
 
-/**
- * Get the EPG output URL base
- */
-export function getEpgUrlBase(request?: Request): string {
-  const base = getBaseUrl(request);
-  return base ? `${base}/output/epg` : "";
-}
+// /**
+//  * Get the EPG output URL base
+//  */
+// export function getEpgUrlBase(request?: Request): string {
+//   const base = getBaseUrl(request);
+//   return base ? `${base}/output/epg` : "";
+// }
 
-/**
- * Get the HDHR URL base
- */
-export function getHdhrUrlBase(request?: Request): string {
-  const base = getBaseUrl(request);
-  return base ? `${base}/hdhr` : "";
-}
+// /**
+//  * Get the HDHR URL base
+//  */
+// export function getHdhrUrlBase(request?: Request): string {
+//   const base = getBaseUrl(request);
+//   return base ? `${base}/hdhr` : "";
+// }
 
 /**
  * Get the current protocol (http: or https:)
@@ -81,7 +81,7 @@ export function getProtocol(request?: Request): string {
     const url = new URL(request.url);
     return url.protocol;
   }
-  if (typeof window === "undefined") return "";
+  if (typeof window === 'undefined') return '';
   return window.location.protocol;
 }
 
@@ -93,7 +93,7 @@ export function getHost(request?: Request): string {
     const url = new URL(request.url);
     return url.host;
   }
-  if (typeof window === "undefined") return "";
+  if (typeof window === 'undefined') return '';
   return window.location.host;
 }
 
@@ -105,7 +105,7 @@ export function getHostname(request?: Request): string {
     const url = new URL(request.url);
     return url.hostname;
   }
-  if (typeof window === "undefined") return "";
+  if (typeof window === 'undefined') return '';
   return window.location.hostname;
 }
 
@@ -120,5 +120,5 @@ export function isProduction(): boolean {
  * Check if we're in browser (client-side)
  */
 export function isBrowser(): boolean {
-  return typeof window !== "undefined";
+  return typeof window !== 'undefined';
 }

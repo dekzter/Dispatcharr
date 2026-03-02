@@ -1,4 +1,23 @@
-import { useEffect, useState, useMemo } from 'react';
+import React, {
+  useEffect,
+  useState,
+  useMemo,
+  useCallback,
+  useRef,
+} from 'react';
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import {
   flexRender,
   getCoreRowModel,
@@ -65,6 +84,14 @@ import {
   SquarePlus,
   Unlock,
   Lock,
+  CircleCheck,
+  Filter,
+  Eye,
+  EyeOff,
+  Square,
+  SquareCheck,
+  X,
+  GripVertical,
 } from 'lucide-react';
 import useChannelsTableStore from '~/store/channelsTable';
 import API from '~/lib/api';
@@ -74,6 +101,7 @@ import useSettingsStore from '~/store/settings';
 import useVideoStore from '~/store/useVideoStore';
 import {
   Popover,
+  PopoverAnchor,
   PopoverContent,
   PopoverTrigger,
 } from '~/components/ui/popover';
@@ -93,7 +121,22 @@ import AssignChannelNumbersForm from './AssignChannelNumbersForm';
 import EPGMatchForm from './EPGMatchForm';
 import useChannelsStore from '~/store/channels';
 import ChannelTableStreams from './ChannelTableStreams';
-import {EditableTextCell} from './EditableCell'
+import {
+  EditableTextCell,
+  EditableLogoCell,
+  EditableEPGCell,
+  EditableGroupCell,
+} from './EditableCell';
+import { SmartPagination } from '~/components/SmartPagination';
+import ChannelForm from './ChannelForm';
+import LazyLogo from '~/components/dispatcharr/lazy-logo';
+import { useChannelLogoSelection } from '~/hooks/use-smart-logos';
+import { useDebounce } from '~/lib/utils';
+import useEPGsStore from '~/store/epgs';
+import { List } from 'react-window';
+import { SearchableInput } from '~/components/dispatcharr/searchable-input';
+import ProfileForm from './ProfileForm'
+import CreateProfilePopover from './CreateProfilePopover'
 
 type Channel = {
   id: number;
@@ -106,17 +149,107 @@ type Channel = {
   epg_data_id: number | null;
 };
 
-interface ChannelsTableProps {
-  m3uUrlBase: string;
-  epgUrlBase: string;
-  hdhrUrlBase: string;
-}
+const ChannelEnabledSwitch = React.memo(
+  ({ rowId, selectedProfileId, selectedTableIds }) => {
+    // Directly extract the channels set once to avoid re-renders on every change.
+    const isEnabled = useChannelsStore(
+      useCallback(
+        (state) =>
+          selectedProfileId === '0' ||
+          state.profiles[selectedProfileId]?.channels.has(rowId),
+        [rowId, selectedProfileId]
+      )
+    );
 
-export default function ChannelsTable({
-  m3uUrlBase,
-  epgUrlBase,
-  hdhrUrlBase,
-}: ChannelsTableProps) {
+    const handleToggle = () => {
+      if (selectedTableIds.length > 1) {
+        API.updateProfileChannels(
+          selectedTableIds,
+          selectedProfileId,
+          !isEnabled
+        );
+      } else {
+        API.updateProfileChannel(rowId, selectedProfileId, !isEnabled);
+      }
+    };
+
+    return (
+      <Switch
+        size="sm"
+        checked={selectedProfileId === '0' || isEnabled}
+        onCheckedChange={handleToggle}
+        disabled={selectedProfileId === '0'}
+      />
+    );
+  }
+);
+
+// Separate component for name column header with debounced filtering
+const NameColumnHeader = React.memo(({ column }) => {
+  const [inputValue, setInputValue] = useState(
+    (column.getFilterValue() as string) ?? ''
+  );
+  const debouncedValue = useDebounce(inputValue, 500);
+
+  useEffect(() => {
+    column.setFilterValue(debouncedValue || undefined);
+  }, [debouncedValue, column]);
+
+  // Sync input when filter is cleared externally
+  useEffect(() => {
+    const currentFilter = column.getFilterValue() as string;
+    if (!currentFilter && inputValue) {
+      setInputValue('');
+    }
+  }, [column.getFilterValue()]);
+
+  return (
+    <div className="space-y-2 flex">
+      <Input
+        placeholder="Name"
+        value={inputValue}
+        onChange={(e) => setInputValue(e.target.value)}
+        className="h-8"
+      />
+      <Button
+        variant="ghost"
+        size="sm"
+        className="-ml-3 h-8"
+        onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+      >
+        {column.getIsSorted() === 'asc' ? (
+          <ArrowUp className="ml-2 h-3 w-3" />
+        ) : column.getIsSorted() === 'desc' ? (
+          <ArrowDown className="ml-2 h-3 w-3" />
+        ) : (
+          <ArrowUpDown className="ml-2 h-3 w-3" />
+        )}
+      </Button>
+    </div>
+  );
+});
+
+export default function ChannelsTable({ onReady, baseUrl }) {
+  const hasSignaledReady = useRef(false);
+  const hasFetchedData = useRef(false);
+  const fetchVersionRef = useRef(0); // Track fetch version to prevent stale updates
+  const lastFetchParamsRef = useRef(null); // Track last fetch params to prevent duplicate requests
+  const fetchInProgressRef = useRef(false); // Track if a fetch is currently in progress
+
+  // Drag-and-drop sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // Require 8px movement before dragging starts
+      },
+    })
+  );
+
+  // EPG data lookup
+  const tvgsById = useEPGsStore((s) => s.tvgsById);
+  const epgs = useEPGsStore((s) => s.epgs);
+  const tvgsLoaded = useEPGsStore((s) => s.tvgsLoaded);
+
   const channels = useChannelsTableStore((s) => s.channels);
   const pagination = useChannelsTableStore((s) => s.pagination);
   const sorting = useChannelsTableStore((s) => s.sorting);
@@ -128,9 +261,10 @@ export default function ChannelsTable({
   const setSelectedChannelIds = useChannelsTableStore(
     (s) => s.setSelectedChannelIds
   );
-  const channelGroups = useChannelsTableStore((s) => s.channelGroups);
+  const channelGroups = useChannelsStore((s) => s.channelGroups);
   const isUnlocked = useChannelsTableStore((s) => s.isUnlocked);
   const setIsUnlocked = useChannelsTableStore((s) => s.setIsUnlocked);
+  const setAllRowIds = useChannelsTableStore((s) => s.setAllQueryIds);
 
   const channelIds = useChannelsStore((s) => s.channelIds);
 
@@ -155,10 +289,104 @@ export default function ChannelsTable({
   const [assignNumbersModalOpen, setAssignNumbersModalOpen] = useState(false);
   const [epgMatchModalOpen, setEpgMatchModalOpen] = useState(false);
   const [expanded, setExpanded] = useState<ExpandedState>({});
+  const [newProfileName, setNewProfileName] = useState<string>('');
+  const [editingChannel, setEditingChannel] = useState(null);
+  const [channelModalOpen, setChannelModalOpen] = useState(false);
+  const [showDisabled, setShowDisabled] = useState(false);
+  const [showOnlyStreamlessChannels, setShowOnlyStreamlessChannels] =
+    useState(false);
+  const [profileModalState, setProfileModalState] = useState({
+    opened: false,
+    mode: null,
+    profileId: null,
+  });
+  const [profileToDelete, setProfileToDelete] = useState(null)
+  const [confirmDeleteProfileOpen, setConfirmDeleteProfileOpen] = useState(false);
+  const [deletingProfile, setDeletingProfile] = useState(false);
 
-  const [hdhrUrl, setHDHRUrl] = useState(hdhrUrlBase);
-  const [epgUrl, setEPGUrl] = useState(epgUrlBase);
-  const [m3uUrl, setM3UUrl] = useState(m3uUrlBase);
+  const { ensureLogosLoaded } = useChannelLogoSelection();
+
+  // DraggableRow component for drag and drop with TanStack Table
+  const DraggableRow = ({ row }) => {
+    const {
+      attributes,
+      listeners,
+      setNodeRef,
+      transform,
+      transition,
+      isDragging,
+    } = useSortable({
+      id: row.id,
+      disabled: !isUnlocked,
+    });
+
+    const style = {
+      transform: CSS.Transform.toString(transform),
+      transition,
+      opacity: isDragging ? 0.5 : 1,
+    };
+
+    return (
+      <>
+        <TableRow
+          ref={setNodeRef}
+          style={style}
+          data-state={row.getIsSelected() && 'selected'}
+          className={`${row.original.streams && row.original.streams.length > 0 ? '' : 'bg-red-900/30'}`}
+        >
+          {isUnlocked && (
+            <TableCell
+              style={{
+                width: '24px',
+                padding: 0,
+                cursor: isDragging ? 'grabbing' : 'grab',
+                backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                borderRight: '1px solid rgba(255, 255, 255, 0.1)',
+              }}
+              {...attributes}
+              {...listeners}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  height: '100%',
+                }}
+              >
+                <GripVertical size={16} opacity={0.5} />
+              </div>
+            </TableCell>
+          )}
+          {row.getVisibleCells().map((cell) => (
+            <TableCell
+              key={cell.id}
+              style={{
+                width: `${cell.column.getSize()}px`,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              }}
+            >
+              {flexRender(cell.column.columnDef.cell, cell.getContext())}
+            </TableCell>
+          ))}
+        </TableRow>
+        {row.getIsExpanded() && (
+          <TableRow style={style} className="bg-primary/25">
+            <TableCell
+              colSpan={row.getVisibleCells().length + (isUnlocked ? 1 : 0)}
+            >
+              <ChannelTableStreams channel={row.original} isExpanded={true} />
+            </TableCell>
+          </TableRow>
+        )}
+      </>
+    );
+  };
+
+  const [hdhrUrl, setHDHRUrl] = useState(`${baseUrl}/hdhr`);
+  const [epgUrl, setEPGUrl] = useState(`${baseUrl}/output/epg`);
+  const [m3uUrl, setM3UUrl] = useState(`${baseUrl}/output/m3u`);
 
   const [m3uParams, setM3uParams] = useState({
     cachedlogos: true,
@@ -187,38 +415,194 @@ export default function ChannelsTable({
     setRowSelection(newRowSelection);
   }, [selectedChannelIds]);
 
-  // Fetch data when pagination, sorting, or filters change
-  useEffect(() => {
-    fetchChannels();
-  }, [pagination.pageIndex, pagination.pageSize, sorting, columnFilters]);
+  const debouncedFilters = useDebounce(columnFilters, 500, () => {
+    setPagination({
+      ...pagination,
+      pageIndex: 0,
+    });
+  });
 
-  const fetchChannels = async () => {
+  /**
+   * Functions
+   */
+  const fetchData = useCallback(async () => {
+    // Build params first to check for duplicates
+    const params = new URLSearchParams();
+    params.append('page', pagination.pageIndex + 1);
+    params.append('page_size', pagination.pageSize);
+    params.append('include_streams', 'true');
+    if (selectedProfileId !== '0') {
+      params.append('channel_profile_id', selectedProfileId);
+    }
+    if (showDisabled === true) {
+      params.append('show_disabled', true);
+    }
+    if (showOnlyStreamlessChannels === true) {
+      params.append('only_streamless', true);
+    }
+
+    // Apply sorting
+    if (sorting.length > 0) {
+      const sortField = sorting[0].id;
+      const sortDirection = sorting[0].desc ? '-' : '';
+      params.append('ordering', `${sortDirection}${sortField}`);
+    }
+
+    // Apply debounced filters
+    debouncedFilters.forEach(({ id, value }) => {
+      if (value) {
+        if (Array.isArray(value)) {
+          // Convert null values to "null" string for URL parameter
+          const processedValue = value
+            .map((v) => (v === null ? 'null' : v))
+            .join(',');
+          params.append(id, processedValue);
+        } else {
+          params.append(id, value);
+        }
+      }
+    });
+
+    const paramsString = params.toString();
+
+    // Skip if same fetch is already in progress (prevents StrictMode double-fetch)
+    if (
+      fetchInProgressRef.current &&
+      lastFetchParamsRef.current === paramsString
+    ) {
+      return;
+    }
+
+    // Increment fetch version to track this specific fetch request
+    const currentFetchVersion = ++fetchVersionRef.current;
+    lastFetchParamsRef.current = paramsString;
+    fetchInProgressRef.current = true;
+
     setIsLoading(true);
-    try {
-      const params = new URLSearchParams();
-      params.append('page', String(pagination.pageIndex + 1));
-      params.append('page_size', String(pagination.pageSize));
-      params.append('include_streams', 'true');
 
-      // Apply sorting
-      if (sorting.length > 0) {
-        const sortField = sorting[0].id;
-        const sortDirection = sorting[0].desc ? '-' : '';
-        params.append('ordering', `${sortDirection}${sortField}`);
+    try {
+      const [results, ids] = await Promise.all([
+        API.queryChannels(params),
+        API.getAllChannelIds(params),
+      ]);
+
+      fetchInProgressRef.current = false;
+
+      // Skip state updates if a newer fetch has been initiated
+      if (currentFetchVersion !== fetchVersionRef.current) {
+        return;
       }
 
-      // Apply filters
-      columnFilters.forEach((filter) => {
-        if (filter.value) {
-          params.append(filter.id, String(filter.value));
-        }
-      });
-
-      await API.queryChannels(params);
-    } catch (error) {
-      console.error('Error fetching channels:', error);
-    } finally {
       setIsLoading(false);
+      hasFetchedData.current = true;
+
+      // setTablePrefs((prev) => ({
+      //   ...prev,
+      //   pageSize: pagination.pageSize,
+      // }));
+      setAllRowIds(ids);
+
+      // Signal ready after first successful data fetch AND EPG data is loaded
+      // This prevents the EPG column from showing "Not Assigned" while EPG data is still loading
+      if (!hasSignaledReady.current && onReady && tvgsLoaded) {
+        hasSignaledReady.current = true;
+        onReady();
+      }
+    } catch (error) {
+      fetchInProgressRef.current = false;
+
+      // Skip state updates if a newer fetch has been initiated
+      if (currentFetchVersion !== fetchVersionRef.current) {
+        return;
+      }
+      setIsLoading(false);
+      // API layer handles "Invalid page" errors by resetting and retrying
+      // Just re-throw to show notification for actual errors
+      throw error;
+    }
+  }, [
+    pagination,
+    sorting,
+    debouncedFilters,
+    showDisabled,
+    selectedProfileId,
+    showOnlyStreamlessChannels,
+  ]);
+
+  const handleDragEnd = async (event) => {
+    const { active, over } = event;
+
+    if (!over || active.id === over.id) {
+      return;
+    }
+
+    const rows = table.getRowModel().rows;
+    const activeIndex = rows.findIndex((row) => row.id === active.id);
+    const overIndex = rows.findIndex((row) => row.id === over.id);
+
+    if (activeIndex === -1 || overIndex === -1) {
+      return;
+    }
+
+    const activeChannel = rows[activeIndex].original;
+    const overChannel = rows[overIndex].original;
+
+    try {
+      // Optimistically update the local state
+      const reorderedData = [...channels];
+      const [movedItem] = reorderedData.splice(activeIndex, 1);
+      reorderedData.splice(overIndex, 0, movedItem);
+      useChannelsTableStore.setState({ channels: reorderedData });
+
+      // Call backend to reorder
+      await API.reorderChannel(
+        activeChannel.id,
+        overIndex > activeIndex
+          ? overChannel.id
+          : rows[overIndex - 1]?.original.id || null
+      );
+
+      // Refetch to get updated channel numbers
+      await API.requeryChannels();
+    } catch (error) {
+      // Revert on error
+      console.error('Failed to reorder channel:', error);
+      await API.requeryChannels();
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const editChannel = async (ch = null, opts = {}) => {
+    // If forceAdd is set, always open a blank form
+    if (opts.forceAdd) {
+      setEditingChannel(null);
+      setChannelModalOpen(true);
+      return;
+    }
+    // Use table's selected state instead of store state to avoid stale selections
+    const currentSelection = table ? selectedChannelIds : [];
+    // console.log('editChannel called with:', {
+    //   ch,
+    //   currentSelection,
+    //   tableExists: !!table,
+    // });
+
+    if (currentSelection.length > 1) {
+      // setChannelBatchModalOpen(true);
+    } else {
+      // If no channel object is passed but we have a selection, get the selected channel
+      let channelToEdit = ch;
+      if (!channelToEdit && currentSelection.length === 1) {
+        const selectedId = currentSelection[0];
+
+        // Use table data since that's what's currently displayed
+        channelToEdit = data.find((d) => d.id === selectedId);
+      }
+      setEditingChannel(channelToEdit);
+      setChannelModalOpen(true);
     }
   };
 
@@ -363,6 +747,55 @@ export default function ChannelsTable({
     });
   };
 
+  const createNewProfile = async () => {
+    await API.addChannelProfile({ name: newProfileName });
+    setNewProfileName('');
+  };
+
+  // Signal ready when EPG data finishes loading (if channels were already fetched)
+  useEffect(() => {
+    if (
+      hasFetchedData.current &&
+      !hasSignaledReady.current &&
+      onReady &&
+      tvgsLoaded
+    ) {
+      hasSignaledReady.current = true;
+      onReady();
+    }
+  }, [tvgsLoaded, onReady]);
+
+  const onEditProfile = (mode, profileId) => {
+    if (!profiles[profileId]) {
+      return;
+    }
+
+    setProfileModalState({opened: true, mode, profileId})
+  };
+
+    const deleteProfile = async (id) => {
+    // Get profile details for the confirmation dialog
+    const profileObj = profiles[id];
+    setProfileToDelete(profileObj);
+
+    // Skip warning if it's been suppressed
+    if (isWarningSuppressed('delete-profile')) {
+      return executeDeleteProfile(id);
+    }
+
+    setConfirmDeleteProfileOpen(true);
+  };
+
+  const executeDeleteProfile = async (id) => {
+    setDeletingProfile(true);
+    try {
+      await API.deleteChannelProfile(id);
+    } finally {
+      setDeletingProfile(false);
+      setConfirmDeleteProfileOpen(false);
+    }
+  };
+
   const columns = useMemo<ColumnDef<Channel>[]>(
     () => [
       {
@@ -442,6 +875,22 @@ export default function ChannelsTable({
         enableHiding: false,
       },
       {
+        id: 'enabled',
+        size: 25,
+        enableHiding: false,
+        enableSorting: false,
+        header: ({ table }) => {
+          <Switch size="sm" />;
+        },
+        cell: ({ row, table }) => (
+          <ChannelEnabledSwitch
+            rowId={row.original.id}
+            selectedProfileId={selectedProfileId}
+            selectedTableIds={selectedChannelIds}
+          />
+        ),
+      },
+      {
         accessorKey: 'channel_number',
         size: 40,
         header: ({ column }) => {
@@ -476,34 +925,7 @@ export default function ChannelsTable({
       {
         accessorKey: 'name',
         enableResizing: true,
-        header: ({ column }) => {
-          return (
-            <div className="space-y-2 flex">
-              <Input
-                placeholder="Name"
-                value={(column.getFilterValue() as string) ?? ''}
-                onChange={(e) => column.setFilterValue(e.target.value)}
-                className="h-8"
-              />
-              <Button
-                variant="ghost"
-                size="sm"
-                className="-ml-3 h-8"
-                onClick={() =>
-                  column.toggleSorting(column.getIsSorted() === 'asc')
-                }
-              >
-                {column.getIsSorted() === 'asc' ? (
-                  <ArrowUp className="ml-2 h-3 w-3" />
-                ) : column.getIsSorted() === 'desc' ? (
-                  <ArrowDown className="ml-2 h-3 w-3" />
-                ) : (
-                  <ArrowUpDown className="ml-2 h-3 w-3" />
-                )}
-              </Button>
-            </div>
-          );
-        },
+        header: ({ column }) => <NameColumnHeader column={column} />,
         cell: (props) => (
           <div className="font-medium overflow-hidden text-ellipsis whitespace-nowrap">
             <EditableTextCell {...props} />
@@ -515,74 +937,88 @@ export default function ChannelsTable({
         accessorKey: 'epg_data_id',
         size: 80,
         enableResizing: true,
-        header: ({ column }) => {
+        enableSorting: false,
+         header: ({ column }) => {
           return (
-            <div className="space-y-2 flex items-center mb-1">
-              EPG
-              <Button
-                variant="ghost"
-                size="sm"
-                className="-ml-3 h-8"
-                onClick={() =>
-                  column.toggleSorting(column.getIsSorted() === 'asc')
-                }
-              >
-                {column.getIsSorted() === 'asc' ? (
-                  <ArrowUp className="ml-2 h-3 w-3" />
-                ) : column.getIsSorted() === 'desc' ? (
-                  <ArrowDown className="ml-2 h-3 w-3" />
-                ) : (
-                  <ArrowUpDown className="ml-2 h-3 w-3" />
+            <div className="space-y-2 flex">
+              <div className="flex items-center justify-center gap-2 pr-3">
+                <SearchableInput
+                  placeholder="EPG"
+                  options={Object.values(epgs).map((epg) => ({
+                    label: epg.name,
+                    value: epg.id,
+                  }))}
+                  allowMultiple={true}
+                  onSelect={(values) => {
+                    console.log(values);
+                    column.setFilterValue(values.map((v) => v.label).join(','));
+                  }}
+                  autoFocus={false}
+                />
+                {column.getFilterValue() && (
+                  <Badge
+                    size="sm"
+                    className="p-1 h-5 bg-foreground/50"
+                    onClick={() => column.setFilterValue('')}
+                  >
+                    {column.getFilterValue().split(',').length} <X />
+                  </Badge>
                 )}
-              </Button>
+              </div>
             </div>
           );
         },
-        cell: ({ row }) => (
-          <div className="font-medium overflow-hidden text-ellipsis whitespace-nowrap">
-            {row.getValue('name')}
-          </div>
+        cell: (props) => (
+          <EditableEPGCell
+            {...props}
+            tvgsById={tvgsById}
+            epgs={epgs}
+            tvgsLoaded={tvgsLoaded}
+          />
         ),
       },
       {
         id: 'channel_group',
         enableResizing: true,
-        accessorFn: (row) =>
-          row.channel_group_id && channelGroups[row.channel_group_id]
-            ? channelGroups[row.channel_group_id].name
-            : '',
+        enableSorting: false,
+        accessorFn: (row) => {
+          if (!channelGroups || !row.channel_group_id) {
+            return '';
+          }
+          return channelGroups[row.channel_group_id]?.name || '';
+        },
         header: ({ column }) => {
           return (
             <div className="space-y-2 flex">
-              <Input
-                placeholder="Group"
-                value={(column.getFilterValue() as string) ?? ''}
-                onChange={(e) => column.setFilterValue(e.target.value)}
-                className="h-8"
-              />
-              <Button
-                variant="ghost"
-                size="sm"
-                className="-ml-3 h-8"
-                onClick={() =>
-                  column.toggleSorting(column.getIsSorted() === 'asc')
-                }
-              >
-                {column.getIsSorted() === 'asc' ? (
-                  <ArrowUp className="ml-2 h-3 w-3" />
-                ) : column.getIsSorted() === 'desc' ? (
-                  <ArrowDown className="ml-2 h-3 w-3" />
-                ) : (
-                  <ArrowUpDown className="ml-2 h-3 w-3" />
+              <div className="flex items-center justify-center gap-2 pr-3">
+                <SearchableInput
+                  placeholder="Groups"
+                  options={Object.values(channelGroups).map((group) => ({
+                    label: group.name,
+                    value: group.id,
+                  }))}
+                  allowMultiple={true}
+                  onSelect={(values) => {
+                    console.log(values);
+                    column.setFilterValue(values.map((v) => v.label).join(','));
+                  }}
+                  autoFocus={false}
+                />
+                {column.getFilterValue() && (
+                  <Badge
+                    size="sm"
+                    className="p-1 h-5 bg-foreground/50"
+                    onClick={() => column.setFilterValue('')}
+                  >
+                    {column.getFilterValue().split(',').length} <X />
+                  </Badge>
                 )}
-              </Button>
+              </div>
             </div>
           );
         },
-        cell: ({ row }) => (
-          <div className="font-medium overflow-hidden text-ellipsis whitespace-nowrap">
-            {row.getValue('name')}
-          </div>
+        cell: (props) => (
+          <EditableGroupCell {...props} channelGroups={channelGroups} />
         ),
       },
       {
@@ -596,10 +1032,12 @@ export default function ChannelsTable({
         minSize: 50,
         maxSize: 120,
         enableResizing: false,
-        cell: ({ row }) => (
-          <div className="font-medium overflow-hidden text-ellipsis whitespace-nowrap">
-            {row.getValue('name')}
-          </div>
+        cell: (props) => (
+          <EditableLogoCell
+            {...props}
+            LazyLogo={LazyLogo}
+            ensureLogosLoaded={ensureLogosLoaded}
+          />
         ),
       },
       {
@@ -613,6 +1051,7 @@ export default function ChannelsTable({
                 variant="ghost"
                 size="sm"
                 className="text-yellow-500 dark:text-yellow-300 h-4 w-4 p-0 cursor-pointer"
+                onClick={() => editChannel(row.original)}
               >
                 <Edit />
               </Button>
@@ -662,13 +1101,7 @@ export default function ChannelsTable({
         },
       },
     ],
-    [
-      lastSelectedIndex,
-      setLastSelectedIndex,
-      channelGroups,
-      channelIds,
-      selectedChannelIds,
-    ]
+    [selectedProfileId, channelGroups, tvgsById, epgs, selectedChannelIds]
   );
 
   const table = useReactTable({
@@ -931,49 +1364,140 @@ export default function ChannelsTable({
             </Popover>
           </div>
         </div>
+
+        {isUnlocked && (
+          <div className="flex text-sm gap-1 pl-4 items-center text-yellow-500">
+            <Unlock size={16} />
+            Editing Mode
+          </div>
+        )}
       </div>
 
       {/* Data Table */}
       <div className="flex justify-between">
         <div className="flex items-center gap-1">
-          <Select
-            value={selectedProfileId}
-            onValueChange={setSelectedProfileId}
-          >
-            <SelectTrigger className="w-[190px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {Object.values(profiles).map((profile) => (
-                <SelectItem value={profile.id}>{profile.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <SearchableInput
+            className="h-8"
+            placeholder={profiles[selectedProfileId]?.name}
+            options={Object.values(profiles).map((profile) => ({
+              label: profile.name,
+              value: profile.id,
+            }))}
+            onSelect={(option) => setSelectedProfileId(option.value)}
+            rowRenderer={({ options, index, handleChange, value }) => {
+              const option = options[index];
+              const isActive = selectedProfileId === options[index].value;
+
+              return (
+                <div
+                  onClick={() => {
+                    handleChange(option, isActive);
+                  }}
+                >
+                  <div className="cursor-pointer hover:bg-secondary flex items-center justify-between gap-2 py-1 px-2">
+                    <div className="text-xs text-center overflow-hidden overflow-ellipsis whitespace-nowrap">
+                      {option.label}
+                    </div>
+                    {option.value !== '0' && (
+<div className="flex justify-end gap-1">
+                      <div
+                        role="button"
+                        className="text-yellow-500 cursor-po inter"
+                        onClick={() => onEditProfile('edit', option.value)}
+                      >
+                        <SquarePen size={16} />
+                      </div>
+
+                      <div
+                        role="button"
+                        className="text-green-600 dark:text-green-500 cursor-pointer"
+                        onClick={() => onEditProfile('duplicate', option.value)}
+                      >
+                        <Copy size={16} />
+                      </div>
+
+                      <div
+                        role="button"
+                        className="text-red-500 cursor-pointer"
+                        onClick={() => deleteProfile(option.value)}
+                      >
+                        <SquareMinus size={16} />
+                      </div>
+                    </div>
+                    )}
+                  </div>
+                </div>
+              );
+            }}
+          />
 
           <div className="cursor-pointer text-green-500">
-            <SquarePlus size={24} />
+            <CreateProfilePopover />
           </div>
-
-          {isUnlocked && (
-            <div className="flex text-sm gap-1 pl-4 items-center text-yellow-500">
-              <Unlock size={16} />
-              Editing Mode
-            </div>
-          )}
         </div>
+
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={fetchChannels}>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-8 cursor-pointer"
+              >
+                <Filter />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start">
+              <DropdownMenuItem
+                className="cursor-pointer"
+                onClick={() => setShowDisabled(!showDisabled)}
+              >
+                {showDisabled ? <Eye size={18} /> : <EyeOff size={18} />}
+                {showDisabled ? 'Hide Disabled' : 'Show Disabled'}
+              </DropdownMenuItem>
+
+              <DropdownMenuItem
+                className="cursor-pointer"
+                onClick={() =>
+                  setShowOnlyStreamlessChannels(!showOnlyStreamlessChannels)
+                }
+              >
+                {showOnlyStreamlessChannels ? (
+                  <SquareCheck size={18} />
+                ) : (
+                  <Square size={18} />
+                )}
+                Only Empty Channels
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <Button
+            variant="outline"
+            size="sm"
+            className="cursor-pointer"
+            onClick={editChannel}
+            disabled={selectedChannelIds.length === 0}
+          >
             <SquarePen className="h-4 w-4 rounded-sm" />
             Edit
           </Button>
-          <Button variant="outline" size="sm" onClick={fetchChannels}>
+          <Button
+            variant="outline"
+            size="sm"
+            className="cursor-pointer"
+            onClick={deleteChannels}
+            disabled={selectedChannelIds.length === 0}
+          >
             <SquareMinus className={`h-4 w-4`} />
             Delete
           </Button>
           <Button
             variant="ghost"
             size="sm"
-            className="rounded-sm border-1 border-green-500 bg-green-200 dark:bg-green-950"
+            className="cursor-pointer rounded-sm border-1 border-green-500 bg-green-200 dark:bg-green-950"
+            onClick={() => editChannel(null, { forceAdd: true })}
+            disabled={authUser.user_level != USER_LEVELS.ADMIN}
           >
             <Plus />
             Add
@@ -981,7 +1505,11 @@ export default function ChannelsTable({
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="w-8">
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-8 cursor-pointer"
+              >
                 <EllipsisVertical />
               </Button>
             </DropdownMenuTrigger>
@@ -995,7 +1523,7 @@ export default function ChannelsTable({
                 {headerPinned ? 'Unpin Header' : 'Pin Header'}
               </DropdownMenuItem>
 
-<DropdownMenuItem onClick={() => setIsUnlocked(!isUnlocked)}>
+              <DropdownMenuItem onClick={() => setIsUnlocked(!isUnlocked)}>
                 {isUnlocked ? (
                   <Unlock className="mr-2 h-4 w-4" />
                 ) : (
@@ -1030,125 +1558,145 @@ export default function ChannelsTable({
         </div>
       </div>
       <div className="relative scrollbar-overlay min-h-0 flex-1 overflow-auto rounded-md border">
-        <table
-          style={{
-            minWidth: '100%',
-            width: table.getTotalSize(),
-            tableLayout: 'fixed',
-          }}
-          className={`${
-            tableSize === 'compact'
-              ? 'table-compact'
-              : tableSize === 'large'
-                ? 'table-large'
-                : ''
-          }`}
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
         >
-          <TableHeader
-            className={`top-0 z-10 !bg-background ${headerPinned ? 'sticky' : ''}`}
+          <SortableContext
+            items={table.getRowModel().rows.map((row) => row.id)}
+            strategy={verticalListSortingStrategy}
           >
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <TableHead
-                    key={header.id}
-                    style={{
-                      width: `${header.getSize()}px`,
-                      position: 'relative',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                    }}
-                  >
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
-                    {header.column.getCanResize() && (
-                      <div
-                        onMouseDown={header.getResizeHandler()}
-                        onTouchStart={header.getResizeHandler()}
-                        className={`resizer ${
-                          header.column.getIsResizing() ? 'isResizing' : ''
-                        }`}
+            <table
+              style={{
+                minWidth: '100%',
+                width: `${table.getTotalSize() + (isUnlocked ? 24 : 0)}px`,
+                tableLayout: 'fixed',
+              }}
+              className={`${
+                tableSize === 'compact'
+                  ? 'table-compact'
+                  : tableSize === 'large'
+                    ? 'table-large'
+                    : ''
+              }`}
+            >
+              <TableHeader
+                className={`top-0 z-10 !bg-background ${headerPinned ? 'sticky' : ''}`}
+              >
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <TableRow key={headerGroup.id}>
+                    {isUnlocked && (
+                      <TableHead
+                        style={{
+                          width: '24px',
+                          padding: 0,
+                        }}
                       />
                     )}
-                  </TableHead>
-                ))}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              Array.from({ length: pagination.pageSize }).map((_, i) => (
-                <TableRow key={i}>
-                  {table.getAllColumns().map((column) => (
-                    <TableCell
-                      key={column.id}
-                      style={{
-                        width: `${column.getSize()}px`,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                      }}
-                    >
-                      <Skeleton className="my-1 h-6 w-full" />
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <>
-                  <TableRow
-                    key={row.id}
-                    data-state={row.getIsSelected() && 'selected'}
-                    className={`${row.original.streams && row.original.streams.length > 0 ? '' : 'bg-red-900/30'}`}
-                  >
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell
-                        key={cell.id}
+                    {headerGroup.headers.map((header) => (
+                      <TableHead
+                        key={header.id}
                         style={{
-                          width: `${cell.column.getSize()}px`,
+                          width: `${header.getSize()}px`,
+                          position: 'relative',
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
                         }}
                       >
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(
+                              header.column.columnDef.header,
+                              header.getContext()
+                            )}
+                        {header.column.getCanResize() && (
+                          <div
+                            onMouseDown={header.getResizeHandler()}
+                            onTouchStart={header.getResizeHandler()}
+                            // className={`resizer ${
+                            //   header.column.getIsResizing() ? 'isResizing' : ''
+                            // }`}
+                            style={{
+                              position: 'absolute',
+                              right: 0,
+                              top: 0,
+                              height: '100%',
+                              width: '5px',
+                              background: header.column.getIsResizing()
+                                ? 'rgba(59, 130, 246, 0.5)'
+                                : 'rgba(0, 0, 0, 0.1)',
+                              cursor: 'col-resize',
+                              userSelect: 'none',
+                              touchAction: 'none',
+                            }}
+                            onMouseEnter={(e) => {
+                              if (!header.column.getIsResizing()) {
+                                e.currentTarget.style.background =
+                                  'rgba(59, 130, 246, 0.3)';
+                              }
+                            }}
+                            onMouseLeave={(e) => {
+                              if (!header.column.getIsResizing()) {
+                                e.currentTarget.style.background =
+                                  'rgba(0, 0, 0, 0.1)';
+                              }
+                            }}
+                          />
                         )}
-                      </TableCell>
+                      </TableHead>
                     ))}
                   </TableRow>
-                  {row.getIsExpanded() && (
-                    <TableRow className="bg-primary/25">
-                      <TableCell colSpan={row.getVisibleCells().length}>
-                        <ChannelTableStreams
-                          channel={row.original}
-                          isExpanded={true}
+                ))}
+              </TableHeader>
+              <TableBody>
+                {isLoading ? (
+                  Array.from({ length: pagination.pageSize }).map((_, i) => (
+                    <TableRow key={i}>
+                      {isUnlocked && (
+                        <TableCell
+                          style={{
+                            width: '24px',
+                            padding: 0,
+                          }}
                         />
-                      </TableCell>
+                      )}
+                      {table.getAllColumns().map((column) => (
+                        <TableCell
+                          key={column.id}
+                          style={{
+                            width: `${column.getSize()}px`,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                          }}
+                        >
+                          <Skeleton className="my-1 h-4 w-full" />
+                        </TableCell>
+                      ))}
                     </TableRow>
-                  )}
-                </>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
-                  No channels found
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </table>
+                  ))
+                ) : table.getRowModel().rows?.length ? (
+                  table
+                    .getRowModel()
+                    .rows.map((row) => <DraggableRow key={row.id} row={row} />)
+                ) : (
+                  <TableRow>
+                    <TableCell
+                      colSpan={columns.length + (isUnlocked ? 1 : 0)}
+                      className="h-24 text-center"
+                    >
+                      No channels found
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </table>
+          </SortableContext>
+        </DndContext>
       </div>
 
       {/* Pagination */}
-      <div className="flex flex-shrink-0 items-center justify-between">
+      <div className="flex items-center justify-center">
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground">Page Size</span>
           <Select
@@ -1165,7 +1713,7 @@ export default function ChannelsTable({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {[5, 10, 25, 50, 100].map((size) => (
+              {[25, 50, 100].map((size) => (
                 <SelectItem key={size} value={String(size)}>
                   {size}
                 </SelectItem>
@@ -1173,38 +1721,20 @@ export default function ChannelsTable({
             </SelectContent>
           </Select>
         </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() =>
-              setPagination({
-                ...pagination,
-                pageIndex: pagination.pageIndex - 1,
-              })
-            }
-            disabled={!table.getCanPreviousPage() || isLoading}
-          >
-            Previous
-          </Button>
-          <span className="text-sm text-muted-foreground">
-            Page {pagination.pageIndex + 1} of {pageCount}
-          </span>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() =>
-              setPagination({
-                ...pagination,
-                pageIndex: pagination.pageIndex + 1,
-              })
-            }
-            disabled={!table.getCanNextPage() || isLoading}
-          >
-            Next
-          </Button>
-        </div>
+        <SmartPagination
+          currentPage={pagination.pageIndex + 1}
+          totalPages={pageCount}
+          onPageChange={(page) =>
+            setPagination({ ...pagination, pageIndex: page - 1 })
+          }
+        />
       </div>
+
+      <ChannelForm
+        channel={editingChannel}
+        isOpen={channelModalOpen}
+        onClose={() => setChannelModalOpen(false)}
+      />
 
       <AssignChannelNumbersForm
         channelIds={selectedChannelIds}
@@ -1216,6 +1746,17 @@ export default function ChannelsTable({
         isOpen={epgMatchModalOpen}
         onClose={() => setEpgMatchModalOpen(false)}
         channelIds={selectedChannelIds}
+      />
+
+      <ProfileForm
+        isOpen={profileModalState.opened}
+        onClose={() => setProfileModalState({ ...profileModalState, opened: false })}
+        mode={profileModalState.mode}
+        profile={
+          profileModalState.profileId
+            ? profiles[profileModalState.profileId]
+            : null
+        }
       />
 
       <ConfirmationDialog
@@ -1230,7 +1771,7 @@ export default function ChannelsTable({
         title={`Confirm ${isBulkDelete ? 'Bulk ' : ''}Channel Deletion`}
         message={
           isBulkDelete ? (
-            `Are you sure you want to delete ${table.selectedTableIds.length} channels? This action cannot be undone.`
+            `Are you sure you want to delete ${selectedChannelIds.length} channels? This action cannot be undone.`
           ) : channelToDelete ? (
             <div style={{ whiteSpace: 'pre-line' }}>
               {`Are you sure you want to delete the following channel?
@@ -1247,6 +1788,32 @@ This action cannot be undone.`}
         confirmLabel="Delete"
         cancelLabel="Cancel"
         actionKey={isBulkDelete ? 'delete-channels' : 'delete-channel'}
+        onSuppressChange={suppressWarning}
+        size="md"
+      />
+
+       <ConfirmationDialog
+        open={confirmDeleteProfileOpen}
+        onClose={() => setConfirmDeleteProfileOpen(false)}
+        onConfirm={() => executeDeleteProfile(profileToDelete?.id)}
+        loading={deletingProfile}
+        title="Confirm Profile Deletion"
+        message={
+          profileToDelete ? (
+            <div style={{ whiteSpace: 'pre-line' }}>
+              {`Are you sure you want to delete the following profile?
+
+Name: ${profileToDelete.name}
+
+This action cannot be undone.`}
+            </div>
+          ) : (
+            'Are you sure you want to delete this profile? This action cannot be undone.'
+          )
+        }
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        actionKey="delete-profile"
         onSuppressChange={suppressWarning}
         size="md"
       />

@@ -90,7 +90,7 @@ export default function ConfirmationDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
+        <div className="space-y-4 py-2">
           {actionKey && (
             <div className="flex items-center space-x-2">
               <Checkbox

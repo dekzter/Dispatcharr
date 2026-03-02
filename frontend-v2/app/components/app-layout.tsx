@@ -169,8 +169,8 @@ function AppLayoutContent() {
                 alt="Dispatcharr"
                 className="h-8 w-8 shrink-0"
               />
-              <div className="flex flex-1 flex-col group-data-[collapsible=icon]:hidden">
-                <span className="text-sm font-semibold">Dispatcharr</span>
+              <div className="group-data-[collapsible=icon]:hidden">
+                <span className="text-lg font-normal">Dispatcharr</span>
               </div>
             </button>
           </div>

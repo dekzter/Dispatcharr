@@ -50,6 +50,7 @@ export default function AssignChannelNumbersForm({
 
       toast.success(result?.message || "Channels assigned successfully");
 
+      // Re-query channels to update the table
       await API.requeryChannels();
 
       onClose();

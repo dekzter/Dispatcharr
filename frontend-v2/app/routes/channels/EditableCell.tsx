@@ -23,6 +23,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '~/components/ui/select';
+import { Label } from '~/components/ui/label';
+import {
+  Popover,
+  PopoverAnchor,
+  PopoverContent,
+  PopoverTrigger,
+} from '~/components/ui/popover';
+import { List } from 'react-window';
+import { SearchableInput } from '~/components/dispatcharr/searchable-input';
 
 // Lightweight wrapper that only renders full editable cell when unlocked
 // This prevents 250+ heavy component instances when table is locked
@@ -351,7 +360,6 @@ const EditableGroupCellInner = ({
   onBlur,
 }) => {
   const previousGroupId = useRef(groupId);
-  const [searchValue, setSearchValue] = useState('');
 
   const saveValue = useCallback(
     async (newGroupId) => {
@@ -378,54 +386,21 @@ const EditableGroupCellInner = ({
     [row.original.id]
   );
 
-  const handleChange = (newGroupId) => {
-    saveValue(newGroupId);
+  const handleChange = (value) => {
+    saveValue(value.value);
     onBlur();
-    setSearchValue('');
   };
 
-  const groupOptions = Object.values(channelGroups).map((group) => ({
-    value: String(group.id),
-    label: group.name,
-  }));
-
   return (
-    <Select
-      value={undefined}
-      onValueChange={handleChange}
-      // onBlur={onBlur}
-    >
-      <SelectTrigger className="w-[190px]">
-        <SelectValue />
-      </SelectTrigger>
-      <SelectContent>
-        {groupOptions.map((group) => (
-          <SelectItem value={group.value}>{group.label}</SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-    // <Select
-    //   value={null}
-    //   onChange={handleChange}
-    //   onBlur={onBlur}
-    //   data={groupOptions}
-    //   size="xs"
-    //   variant="unstyled"
-    //   searchable
-    //   searchValue={searchValue}
-    //   onSearchChange={setSearchValue}
-    //   autoFocus
-    //   placeholder={groupName}
-    //   nothingFoundMessage="No groups found"
-    //   styles={{
-    //     input: {
-    //       minHeight: 'unset',
-    //       height: '100%',
-    //       padding: '0 4px',
-    //       backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    //     },
-    //   }}
-    // />
+    <SearchableInput
+      placeholder="Select Group"
+      options={Object.values(channelGroups).map((group) => ({
+        value: String(group.id),
+        label: group.name,
+      }))}
+      onSelect={handleChange}
+      onBlur={onBlur}
+    />
   );
 };
 
@@ -472,7 +447,7 @@ export const EditableEPGCell = ({
           className={`flex px-4 items-center gap-2 ${isUnlocked ? 'cursor-text' : ''}`}
           onClick={() => isUnlocked && setIsFocused(true)}
         >
-          <Skeleton className="my-1 h-6 w-full" />
+          <Skeleton className="my-1 h-4 w-full" />
         </div>
       );
     }
@@ -516,7 +491,6 @@ const EditableEPGCellInner = ({
   onBlur,
 }) => {
   const previousEpgDataId = useRef(epgDataId);
-  const [searchValue, setSearchValue] = useState('');
 
   const saveValue = useCallback(
     async (newEpgDataId) => {
@@ -544,9 +518,8 @@ const EditableEPGCellInner = ({
     [row.original.id]
   );
 
-  const handleChange = (newEpgDataId) => {
-    saveValue(newEpgDataId);
-    setSearchValue('');
+  const handleChange = (option) => {
+    saveValue(option.value);
     onBlur();
   };
 
@@ -600,27 +573,11 @@ const EditableEPGCellInner = ({
   }, [tvgsById, epgs]);
 
   return (
-    <Select
-      value={null}
-      onChange={handleChange}
+    <SearchableInput
+      placeholder="Search EPG"
+      options={epgOptions}
+      onSelect={handleChange}
       onBlur={onBlur}
-      data={epgOptions}
-      size="xs"
-      variant="unstyled"
-      searchable
-      searchValue={searchValue}
-      onSearchChange={setSearchValue}
-      autoFocus
-      placeholder={displayText}
-      nothingFoundMessage="No EPG found"
-      styles={{
-        input: {
-          minHeight: 'unset',
-          height: '100%',
-          padding: '0 4px',
-          backgroundColor: 'rgba(255, 255, 255, 0.1)',
-        },
-      }}
     />
   );
 };
@@ -677,6 +634,7 @@ const EditableLogoCellInner = ({ row, logoId, onBlur }) => {
   const channelLogos = useLogosStore((s) => s.channelLogos);
   const previousLogoId = useRef(logoId);
   const [searchValue, setSearchValue] = useState('');
+  const [popoverOpen, setPopoverOpen] = useState(true);
 
   const saveValue = useCallback(
     async (newLogoId) => {
@@ -706,6 +664,12 @@ const EditableLogoCellInner = ({ row, logoId, onBlur }) => {
   const handleChange = (newLogoId) => {
     saveValue(newLogoId);
     setSearchValue('');
+    setPopoverOpen(false); // Close popover when selection is made
+    onBlur();
+  };
+
+  const handlePopoverClose = () => {
+    setPopoverOpen(false);
     onBlur();
   };
 
@@ -733,6 +697,10 @@ const EditableLogoCellInner = ({ row, logoId, onBlur }) => {
 
     return options;
   }, [channelLogos]);
+
+  const filteredLogos = logoOptions.filter((logo) =>
+    logo.label.toLowerCase().includes(searchValue.toLowerCase())
+  );
 
   // Get display text for the current logo
   const displayText =
@@ -763,39 +731,81 @@ const EditableLogoCellInner = ({ row, logoId, onBlur }) => {
     );
   };
 
+  const LogoRow = ({ index, filteredLogos, style }) => {
+    const option = filteredLogos[index];
+    const logoSrc = option.logo?.cache_url || option.logo?.url || '/logo.png';
+
+    return (
+      <div
+        style={style}
+        onClick={() => {
+          handleChange(option.value);
+        }}
+      >
+        <div className="cursor-pointer hover:bg-secondary flex items-center justify-start gap-2 py-1">
+          <img
+            className="h-[30px] max-w-[80px]"
+            src={logoSrc}
+            style={{ maxWidth: 80, objectFit: 'contain' }}
+            alt={option.label}
+            onError={(e) => {
+              // Fallback to default logo if image fails to load
+              if (e.target.src !== '/logo.png') {
+                e.target.src = '/logo.png';
+              }
+            }}
+          />
+          <div className="text-xs text-center overflow-hidden overflow-ellipsis whitespace-nowrap max-w-[80px]">
+            {option.label}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="flex items-center">
-      <Select
-        value={null}
-        onChange={handleChange}
-        onBlur={onBlur}
-        data={logoOptions}
-        size="xs"
-        variant="unstyled"
-        searchable
-        searchValue={searchValue}
-        onSearchChange={setSearchValue}
-        autoFocus
-        placeholder={displayText}
-        nothingFoundMessage="No logos found"
-        renderOption={renderOption}
-        maxDropdownHeight={400}
-        comboboxProps={{ width: 250, position: 'bottom-start' }}
-        styles={{
-          input: {
-            minHeight: 'unset',
-            height: '100%',
-            padding: '0 4px',
-            backgroundColor: 'rgba(255, 255, 255, 0.1)',
-          },
-          option: {
-            padding: 0,
-          },
-          dropdown: {
-            minWidth: '250px',
-          },
+      <Popover
+        open={popoverOpen}
+        onOpenChange={(open) => {
+          setPopoverOpen(open);
+          if (!open) {
+            onBlur();
+          }
         }}
-      />
+      >
+        <PopoverAnchor asChild>
+          <Input
+            value={searchValue}
+            onChange={(e) => setSearchValue(e.target.value)}
+            autoFocus
+            onKeyDown={(e) => {
+              // Keep popover open while typing
+              if (e.key === 'Escape') {
+                handlePopoverClose();
+              }
+            }}
+          />
+        </PopoverAnchor>
+        <PopoverContent
+          className="w-[250px]"
+          onOpenAutoFocus={(e) => {
+            // Prevent focus from moving to PopoverContent
+            e.preventDefault();
+          }}
+        >
+          <div className="h-[200px]">
+            <List
+              height={200}
+              width="100%"
+              rowCount={filteredLogos.length}
+              rowHeight={55}
+              rowComponent={LogoRow}
+              rowProps={{ filteredLogos }}
+            />
+          </div>
+        </PopoverContent>
+      </Popover>
     </div>
   );
 };

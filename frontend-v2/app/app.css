@@ -308,7 +308,7 @@ thead.sticky::after {
 .overflow-auto,
 .overflow-y-auto,
 .overflow-x-auto {
-  scrollbar-gutter: stable;
+  /* scrollbar-gutter: stable; */
 }
 
 /* Animation for smoother scrollbar appearance */
@@ -438,4 +438,41 @@ thead.sticky::after {
 
 .text-error-foreground {
   color: oklch(var(--error-foreground));
+}
+
+/* Styling for the sash (splitter) */
+.sash.sash-vertical {
+  position: relative;
+  width: 4px;
+  /* Thin invisible divider */
+  background: transparent;
+}
+
+/* Create a short vertical bar */
+.sash.sash-vertical::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 6px;
+  /* Width of the short bar */
+  height: 100px;
+  /* Short bar length */
+  background: var(--input);
+  /* Light color similar to your screenshot */
+  border-radius: 4px;
+}
+
+/* Optional: Highlight when hovering */
+.sash.sash-vertical:hover::before {
+  background: var(--muted-foreground);
+}
+
+@utility card-hover {
+  @apply transition-all duration-300 hover:shadow-lg hover:shadow-primary/10 hover:scale-[1.02];
+}
+
+@utility card-hover-border {
+  @apply transition-all duration-300 hover:shadow-lg hover:shadow-primary/10 hover:scale-[1.02] hover:border-primary/50;
 }
