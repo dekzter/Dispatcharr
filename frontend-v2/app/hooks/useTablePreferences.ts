@@ -1,14 +1,14 @@
-import { useState, useEffect, useCallback } from "react";
-import storage from "~/lib/safe-storage";
+import storage from '@/lib/safe-storage';
+import { useCallback, useEffect, useState } from 'react';
 
-export type TableSize = "compact" | "default" | "large";
+export type TableSize = 'compact' | 'default' | 'large';
 
 interface TablePreferences {
   tableSize?: TableSize;
   headerPinned?: boolean;
 }
 
-const STORAGE_KEY = "table-preferences";
+const STORAGE_KEY = 'table-preferences';
 
 /**
  * Hook for managing table display preferences (size, header pinning, etc.)
@@ -17,7 +17,7 @@ const STORAGE_KEY = "table-preferences";
 export function useTablePreferences() {
   const [tableSize, setTableSizeState] = useState<TableSize>(() => {
     const prefs = storage.getJSON<TablePreferences>(STORAGE_KEY);
-    return prefs?.tableSize || "default";
+    return prefs?.tableSize || 'default';
   });
 
   const [headerPinned, setHeaderPinnedState] = useState<boolean>(() => {
@@ -40,13 +40,13 @@ export function useTablePreferences() {
     };
 
     window.addEventListener(
-      "table-preferences-changed",
-      handleCustomEvent as EventListener,
+      'table-preferences-changed',
+      handleCustomEvent as EventListener
     );
     return () =>
       window.removeEventListener(
-        "table-preferences-changed",
-        handleCustomEvent as EventListener,
+        'table-preferences-changed',
+        handleCustomEvent as EventListener
       );
   }, [tableSize, headerPinned]);
 
@@ -62,12 +62,12 @@ export function useTablePreferences() {
 
       // Dispatch custom event for same-page sync
       window.dispatchEvent(
-        new CustomEvent("table-preferences-changed", {
+        new CustomEvent('table-preferences-changed', {
           detail: { tableSize: value },
-        }),
+        })
       );
     } catch (e) {
-      console.error("Error saving tableSize to localStorage:", e);
+      console.error('Error saving tableSize to localStorage:', e);
     }
   }, []);
 
@@ -83,12 +83,12 @@ export function useTablePreferences() {
 
       // Dispatch custom event for same-page sync
       window.dispatchEvent(
-        new CustomEvent("table-preferences-changed", {
+        new CustomEvent('table-preferences-changed', {
           detail: { headerPinned: value },
-        }),
+        })
       );
     } catch (e) {
-      console.error("Error saving headerPinned to localStorage:", e);
+      console.error('Error saving headerPinned to localStorage:', e);
     }
   }, []);
 

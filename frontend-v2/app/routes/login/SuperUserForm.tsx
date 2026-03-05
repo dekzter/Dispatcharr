@@ -1,20 +1,18 @@
-import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router";
-import { Button } from "~/components/ui/button";
-import { Input } from "~/components/ui/input";
-import { Spinner } from "~/components/ui/spinner";
-import useAuthStore from "~/store/auth";
-import useSettingsStore from "~/store/settings";
-import { Label } from "~/components/ui/label";
-import { Checkbox } from "~/components/ui/checkbox";
-import toast from "~/lib/toast";
-import API from '~/lib/api';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Spinner } from '@/components/ui/spinner';
+import useAuthStore from '@/store/auth';
+import useSettingsStore from '@/store/settings';
+import { Label } from '@/components/ui/label';
+import API from '@/lib/api';
 
 export default function SuperUserForm() {
   const navigate = useNavigate();
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   const setSuperuserExists = useAuthStore((s) => s.setSuperuserExists);
@@ -26,9 +24,9 @@ export default function SuperUserForm() {
     fetchVersion();
   }, [fetchVersion]);
 
-   const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true)
+    setIsLoading(true);
     try {
       const response = await API.createSuperUser({
         username,
@@ -95,7 +93,7 @@ export default function SuperUserForm() {
 
         {/* Submit Button */}
         <Button type="submit" className="w-full" disabled={isLoading}>
-          {isLoading ? <Spinner /> : "Create Account"}
+          {isLoading ? <Spinner /> : 'Create Account'}
         </Button>
       </form>
     </div>

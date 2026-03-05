@@ -1,10 +1,10 @@
 // frontend/src/components/FloatingVideo.js
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
+import { X } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Draggable from 'react-draggable';
 import useVideoStore from '../store/useVideoStore';
-import { Button } from '~/components/ui/button';
-import { Spinner } from '~/components/ui/spinner';
-import { X } from 'lucide-react';
 // import { CloseButton, Flex, Loader, Text, Box } from '@mantine/core';
 
 export default function FloatingVideo() {

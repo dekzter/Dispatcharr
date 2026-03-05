@@ -1,5 +1,5 @@
-import { create } from "zustand";
-import api from "~/lib/api";
+import { create } from 'zustand';
+import api from '@/lib/api';
 
 const getLogosArray = (response) => {
   return Array.isArray(response) ? response : response.results || [];
@@ -86,8 +86,8 @@ const useLogosStore = create((set, get) => ({
       });
       return response;
     } catch (error) {
-      console.error("Failed to fetch logos:", error);
-      set({ error: "Failed to load logos.", isLoading: false });
+      console.error('Failed to fetch logos:', error);
+      set({ error: 'Failed to load logos.', isLoading: false });
       throw error;
     }
   },
@@ -106,7 +106,7 @@ const useLogosStore = create((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       // Disable pagination to get all logos for management interface
-      const response = await api.getLogos({ no_pagination: "true" });
+      const response = await api.getLogos({ no_pagination: 'true' });
 
       // Handle both paginated and non-paginated responses
       const logosArray = getLogosArray(response);
@@ -121,8 +121,8 @@ const useLogosStore = create((set, get) => ({
       });
       return logosArray;
     } catch (error) {
-      console.error("Failed to fetch all logos:", error);
-      set({ error: "Failed to load all logos.", isLoading: false });
+      console.error('Failed to fetch all logos:', error);
+      set({ error: 'Failed to load all logos.', isLoading: false });
       throw error;
     }
   },
@@ -132,7 +132,7 @@ const useLogosStore = create((set, get) => ({
     try {
       // Load used logos with pagination for better performance
       const response = await api.getLogos({
-        used: "true",
+        used: 'true',
         page_size: pageSize,
       });
 
@@ -151,8 +151,8 @@ const useLogosStore = create((set, get) => ({
       }));
       return response;
     } catch (error) {
-      console.error("Failed to fetch used logos:", error);
-      set({ error: "Failed to load used logos.", isLoading: false });
+      console.error('Failed to fetch used logos:', error);
+      set({ error: 'Failed to load used logos.', isLoading: false });
       throw error;
     }
   },
@@ -201,7 +201,7 @@ const useLogosStore = create((set, get) => ({
       }));
       return logos;
     } catch (error) {
-      console.error("Failed to fetch logos by IDs:", error);
+      console.error('Failed to fetch logos by IDs:', error);
       throw error;
     }
   },
@@ -237,7 +237,7 @@ const useLogosStore = create((set, get) => ({
         }
       }
     } catch (error) {
-      console.error("Background logo loading failed:", error);
+      console.error('Background logo loading failed:', error);
       // Don't throw error for background loading
     } finally {
       set({ backgroundLoading: false });
@@ -259,7 +259,7 @@ const useLogosStore = create((set, get) => ({
     setTimeout(async () => {
       try {
         // Use the API directly to avoid interfering with the main isLoading state
-        const response = await api.getLogos({ no_pagination: "true" });
+        const response = await api.getLogos({ no_pagination: 'true' });
         const logosArray = getLogosArray(response);
 
         // Process logos in smaller chunks to avoid blocking the main thread
@@ -284,7 +284,7 @@ const useLogosStore = create((set, get) => ({
           backgroundLoading: false,
         });
       } catch (error) {
-        console.error("Background all logos loading failed:", error);
+        console.error('Background all logos loading failed:', error);
         set({ backgroundLoading: false });
       }
     }, 0); // Execute immediately but asynchronously
@@ -305,13 +305,13 @@ const useLogosStore = create((set, get) => ({
 
     set({ backgroundLoading: true });
     try {
-      console.log("Background loading channel logos...");
+      console.log('Background loading channel logos...');
       await get().fetchChannelAssignableLogos();
       console.log(
-        `Background loaded ${Object.keys(get().channelLogos).length} channel logos`,
+        `Background loaded ${Object.keys(get().channelLogos).length} channel logos`
       );
     } catch (error) {
-      console.error("Background channel logo loading failed:", error);
+      console.error('Background channel logo loading failed:', error);
       // Don't throw error for background loading
     } finally {
       set({ backgroundLoading: false });
@@ -326,7 +326,7 @@ const useLogosStore = create((set, get) => ({
       get()
         .backgroundLoadAllLogos()
         .catch((error) => {
-          console.error("Background logo loading failed:", error);
+          console.error('Background logo loading failed:', error);
         });
     }, 3000); // Wait 3 seconds after app initialization
   },

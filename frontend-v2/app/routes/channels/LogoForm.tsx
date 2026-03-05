@@ -1,61 +1,21 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
-import { useForm } from 'react-hook-form';
-import { yupResolver } from '@hookform/resolvers/yup';
-import * as Yup from 'yup';
+import { FileUpload } from '@/components/dispatcharr/file-upload';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '~/components/ui/dialog';
-import { Button } from '~/components/ui/button';
-import { Label } from '~/components/ui/label';
-import API from '~/lib/api';
-import toast from '~/lib/toast';
-import {
-  Field,
-  FieldContent,
-  FieldDescription,
-  FieldError,
-  FieldLabel,
-} from '~/components/ui/field';
-import { RadioGroup, RadioGroupItem } from '~/components/ui/radio-group';
-import { Badge } from '~/components/ui/badge';
-import { X, ListOrdered } from 'lucide-react';
-import useSettingsStore from '~/store/settings';
-import { getChangedSettings, saveChangedSettings } from '~/lib/settings-utils';
-import useChannelsStore from '~/store/channels';
-import { useChannelLogoSelection } from '~/hooks/use-smart-logos';
-import useLogosStore from '~/store/logos';
-import useStreamProfilesStore from '~/store/streamProfiles';
-import useEPGsStore from '~/store/epgs';
-import { List } from 'react-window';
-import { USER_LEVELS, USER_LEVEL_LABELS } from '~/lib/constants';
-import { Input } from '~/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '~/components/ui/select';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '~/components/ui/popover';
-import { ScrollArea } from '~/components/ui/scroll-area';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '~/components/ui/tooltip';
-import { Separator } from '~/components/ui/separator';
-import { Switch } from '~/components/ui/switch';
-import { FileUpload } from '~/components/dispatcharr/file-upload';
+} from '@/components/ui/dialog';
+import { Field, FieldError, FieldLabel } from '@/components/ui/field';
+import { Input } from '@/components/ui/input';
+import { Separator } from '@/components/ui/separator';
+import API from '@/lib/api';
+import toast from '@/lib/toast';
+import { yupResolver } from '@hookform/resolvers/yup';
+import { useEffect, useMemo, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import * as Yup from 'yup';
 
 const schema = Yup.object({
   name: Yup.string().required('Name is required'),
@@ -65,7 +25,7 @@ const schema = Yup.object({
       'valid-url-or-path',
       'Must be a valid URL or local file path',
       (value) => {
-        console.log(value)
+        console.log(value);
         if (!value) return false;
         // Allow local file paths starting with /data/logos/
         if (value.startsWith('/data/logos/')) return true;
@@ -292,7 +252,7 @@ const LogoForm = ({ logo = null, isOpen, onClose, onSuccess }) => {
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col flex-1 overflow-hidden">
+        <form onSubmit={handleSubmit(onSubmit)}>
           <div className="flex flex-col gap-4 overflow-y-auto px-1">
             {/* Logo Preview */}
             {logoPreview && (
@@ -329,21 +289,21 @@ const LogoForm = ({ logo = null, isOpen, onClose, onSuccess }) => {
               <div className="font-semibold">Upload Logo File</div>
 
               <FileUpload
-              maxFiles={1}
-              multiple={false}
-              accept={{
-                'image/*': [
-                  '.png',
-                  '.jpg',
-                  '.jpeg',
-                  '.gif',
-                  '.webp',
-                  '.bmp',
-                  '.svg',
-                ],
-              }}
-              maxSize={5 * 1024 * 1024} // 5MB
-              disabled={uploading}
+                maxFiles={1}
+                multiple={false}
+                accept={{
+                  'image/*': [
+                    '.png',
+                    '.jpg',
+                    '.jpeg',
+                    '.gif',
+                    '.webp',
+                    '.bmp',
+                    '.svg',
+                  ],
+                }}
+                maxSize={5 * 1024 * 1024} // 5MB
+                disabled={uploading}
                 onFilesSelected={handleFileSelect}
                 showPreview={true}
                 onFilesCleared={() => setLogoPreview(null)}
@@ -387,7 +347,7 @@ const LogoForm = ({ logo = null, isOpen, onClose, onSuccess }) => {
             </Field>
           </div>
 
-          <DialogFooter className="pt-4">
+          <DialogFooter className="mt-4">
             <Button
               type="button"
               variant="outline"

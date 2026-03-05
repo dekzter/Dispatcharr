@@ -5,25 +5,29 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
-} from "react-router";
+} from 'react-router';
 
-import type { Route } from "./+types/root";
-import "./app.css";
-import "allotment/dist/style.css";
-import { ThemeProvider } from "./lib/theme-provider";
-import { Toaster } from "./components/ui/sonner";
+import { TooltipProvider } from '@/components/ui/tooltip';
+import 'allotment/dist/style.css';
+import type { Route } from './+types/root';
+import './app.css';
+import { Toaster } from './components/ui/sonner';
+import { ThemeProvider } from './lib/theme-provider';
+import './table.css';
 
 export const links: Route.LinksFunction = () => [
-  { rel: "preconnect", href: "https://fonts.googleapis.com" },
+  { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
   {
-    rel: "preconnect",
-    href: "https://fonts.gstatic.com",
-    crossOrigin: "anonymous",
+    rel: 'preconnect',
+    href: 'https://fonts.gstatic.com',
+    crossOrigin: 'anonymous',
   },
   {
-    rel: "stylesheet",
-    href: "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap",
+    rel: 'stylesheet',
+    href: 'https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap',
   },
+  // PWA: iOS home screen icon
+  { rel: 'apple-touch-icon', href: '/logo.png' },
 ];
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -32,6 +36,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        {/* PWA meta tags */}
+        <meta name="theme-color" content="#0f172a" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta
+          name="apple-mobile-web-app-status-bar-style"
+          content="black-translucent"
+        />
+        <meta name="apple-mobile-web-app-title" content="Dispatcharr" />
+
         <Meta />
         <Links />
         <script
@@ -58,22 +72,24 @@ export function Layout({ children }: { children: React.ReactNode }) {
 export default function App() {
   return (
     <ThemeProvider>
-      <Outlet />
-      <Toaster />
+      <TooltipProvider>
+        <Outlet />
+        <Toaster />
+      </TooltipProvider>
     </ThemeProvider>
   );
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
-  let message = "Oops!";
-  let details = "An unexpected error occurred.";
+  let message = 'Oops!';
+  let details = 'An unexpected error occurred.';
   let stack: string | undefined;
 
   if (isRouteErrorResponse(error)) {
-    message = error.status === 404 ? "404" : "Error";
+    message = error.status === 404 ? '404' : 'Error';
     details =
       error.status === 404
-        ? "The requested page could not be found."
+        ? 'The requested page could not be found.'
         : error.statusText || details;
   } else if (!import.meta.env.PROD && error && error instanceof Error) {
     details = error.message;

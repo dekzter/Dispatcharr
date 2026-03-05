@@ -1,18 +1,18 @@
-import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router";
-import { Button } from "~/components/ui/button";
-import { Input } from "~/components/ui/input";
-import { Spinner } from "~/components/ui/spinner";
-import useAuthStore from "~/store/auth";
-import useSettingsStore from "~/store/settings";
-import { Label } from "~/components/ui/label";
-import { Checkbox } from "~/components/ui/checkbox";
-import toast from "~/lib/toast";
+import { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Spinner } from '@/components/ui/spinner';
+import useAuthStore from '@/store/auth';
+import useSettingsStore from '@/store/settings';
+import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
+import toast from '@/lib/toast';
 
 export default function LoginForm() {
   const navigate = useNavigate();
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [savePassword, setSavePassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -27,16 +27,16 @@ export default function LoginForm() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate("/");
+      navigate('/');
     }
   }, [isAuthenticated, user, navigate]);
 
   useEffect(() => {
     // Load saved username if it exists
     const savedUsername = localStorage.getItem(
-      "dispatcharr_remembered_username",
+      'dispatcharr_remembered_username'
     );
-    const savedPassword = localStorage.getItem("dispatcharr_saved_password");
+    const savedPassword = localStorage.getItem('dispatcharr_saved_password');
 
     if (savedUsername) {
       setUsername(savedUsername);
@@ -67,7 +67,7 @@ export default function LoginForm() {
     try {
       return btoa(password);
     } catch (error) {
-      console.error("Encoding error:", error);
+      console.error('Encoding error:', error);
       return null;
     }
   };
@@ -76,8 +76,8 @@ export default function LoginForm() {
     try {
       return atob(encoded);
     } catch (error) {
-      console.error("Decoding error:", error);
-      return "";
+      console.error('Decoding error:', error);
+      return '';
     }
   };
 
@@ -90,33 +90,33 @@ export default function LoginForm() {
 
       // Save username if remember me is checked
       if (rememberMe) {
-        localStorage.setItem("dispatcharr_remembered_username", username);
+        localStorage.setItem('dispatcharr_remembered_username', username);
 
         // Save password if save password is checked
         if (savePassword) {
           const encoded = encodePassword(password);
           if (encoded) {
-            localStorage.setItem("dispatcharr_saved_password", encoded);
+            localStorage.setItem('dispatcharr_saved_password', encoded);
           }
         } else {
-          localStorage.removeItem("dispatcharr_saved_password");
+          localStorage.removeItem('dispatcharr_saved_password');
         }
       } else {
-        localStorage.removeItem("dispatcharr_remembered_username");
-        localStorage.removeItem("dispatcharr_saved_password");
+        localStorage.removeItem('dispatcharr_remembered_username');
+        localStorage.removeItem('dispatcharr_saved_password');
       }
 
       await initData();
       // Navigation will happen automatically via the useEffect or route protection
     } catch (e: any) {
       console.log(`Failed to login: ${e}`);
-      if (e?.message === "Unauthorized") {
+      if (e?.message === 'Unauthorized') {
         toast.show({
-          title: "Web UI Access Denied",
+          title: 'Web UI Access Denied',
           message:
-            "This account is a Streamer account and cannot log into the web UI. " +
-            "Your M3U and stream URLs still work. Contact an admin to upgrade your account level.",
-          color: "red",
+            'This account is a Streamer account and cannot log into the web UI. ' +
+            'Your M3U and stream URLs still work. Contact an admin to upgrade your account level.',
+          color: 'red',
           autoClose: 10000,
         });
       }
@@ -202,7 +202,7 @@ export default function LoginForm() {
 
         {/* Submit Button */}
         <Button type="submit" className="w-full" disabled={isLoading}>
-          {isLoading ? <Spinner /> : "Login"}
+          {isLoading ? <Spinner /> : 'Login'}
         </Button>
       </form>
     </div>

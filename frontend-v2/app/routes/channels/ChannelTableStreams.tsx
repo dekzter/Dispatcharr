@@ -1,29 +1,37 @@
-import React, { useMemo, useState, useEffect } from 'react';
-import API from '~/lib/api';
-import { copyToClipboard } from '~/lib/utils';
+import API from '@/lib/api';
+import { copyToClipboard } from '@/lib/utils';
 import {
-  GripHorizontal,
-  SquareMinus,
+  flexRender,
+  getCoreRowModel,
+  useReactTable,
+} from '@tanstack/react-table';
+import {
   ChevronDown,
   ChevronRight,
   Eye,
+  GripHorizontal,
+  SquareMinus,
 } from 'lucide-react';
-import {
-  useReactTable,
-  getCoreRowModel,
-  flexRender,
-} from '@tanstack/react-table';
+import { useEffect, useMemo, useState } from 'react';
 // import './table.css';
-import useChannelsTableStore from '../../store/channelsTable';
-import usePlaylistsStore from '../../store/playlists';
-import useVideoStore from '../../store/useVideoStore';
-import useSettingsStore from '../../store/settings';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
+  Collapsible,
+  CollapsibleContent,
+} from '@/components/ui/collapsible';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { USER_LEVELS } from '@/lib/constants';
+import {
+  closestCenter,
   DndContext,
   KeyboardSensor,
   MouseSensor,
   TouchSensor,
-  closestCenter,
   useSensor,
   useSensors,
 } from '@dnd-kit/core';
@@ -31,26 +39,16 @@ import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import {
   arrayMove,
   SortableContext,
+  useSortable,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { shallow } from 'zustand/shallow';
 import useAuthStore from '../../store/auth';
-import { USER_LEVELS } from '~/lib/constants';
-import { Button } from '~/components/ui/button';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '~/components/ui/tooltip';
-import { Badge } from '~/components/ui/badge';
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '~/components/ui/collapsible';
-import { TableCell, TableRow } from '~/components/ui/table';
+import useChannelsTableStore from '../../store/channelsTable';
+import usePlaylistsStore from '../../store/playlists';
+import useSettingsStore from '../../store/settings';
+import useVideoStore from '../../store/useVideoStore';
 
 const RowDragHandleCell = ({ attributes, listeners }) => {
   return (
@@ -73,7 +71,14 @@ const RowDragHandleCell = ({ attributes, listeners }) => {
 
 // Row Component
 const DraggableRow = ({ row, index }) => {
-  const { transform, transition, setNodeRef, isDragging, attributes, listeners } = useSortable({
+  const {
+    transform,
+    transition,
+    setNodeRef,
+    isDragging,
+    attributes,
+    listeners,
+  } = useSortable({
     id: row.original.id,
   });
 
@@ -85,37 +90,35 @@ const DraggableRow = ({ row, index }) => {
     position: 'relative',
   };
   return (
-    <div
-      ref={setNodeRef}
-      key={row.id}
-      className='flex'
-      style={style}
-    >
+    <div ref={setNodeRef} key={row.id} className="flex" style={style}>
       {row.getVisibleCells().map((cell) => {
         const isStale = row.original.is_stale;
         // Pass drag handlers to the drag handle cell
-        const cellProps = cell.column.id === 'drag-handle' ? { attributes, listeners } : {};
+        const cellProps =
+          cell.column.id === 'drag-handle' ? { attributes, listeners } : {};
         return (
           <div
             key={cell.id}
             className={`flex flex-col flex-col- ${isStale ? 'bg-red-900/30' : ''}`}
             style={{
               flex: cell.column.columnDef.size ? '0 0 auto' : '1 1 0',
-            //   width: cell.column.columnDef.size
-            //     ? cell.column.getSize()
-            //     : undefined,
-            //   minWidth: 0,
-            //   ...(isStale && {
-            //     backgroundColor: 'rgba(239, 68, 68, 0.15)',
-            //   }),
+              //   width: cell.column.columnDef.size
+              //     ? cell.column.getSize()
+              //     : undefined,
+              //   minWidth: 0,
+              //   ...(isStale && {
+              //     backgroundColor: 'rgba(239, 68, 68, 0.15)',
+              //   }),
             }}
           >
             <div className="flex items-center" style={{ height: '100%' }}>
               <div>
                 {cell.column.id === 'drag-handle'
-                  ? flexRender(cell.column.columnDef.cell, { ...cell.getContext(), ...cellProps })
-                  : flexRender(cell.column.columnDef.cell, cell.getContext())
-                }
+                  ? flexRender(cell.column.columnDef.cell, {
+                      ...cell.getContext(),
+                      ...cellProps,
+                    })
+                  : flexRender(cell.column.columnDef.cell, cell.getContext())}
               </div>
             </div>
           </div>
@@ -296,13 +299,15 @@ const ChannelStreams = ({ channel, isExpanded }) => {
           {Object.entries(stats).map(([key, value]) => (
             <Tooltip>
               <TooltipTrigger asChild>
-                <Badge className="bg-zinc-400 dark:bg-zinc-700 text-current uppercase text-xs/3">{key
-                  .replace(/_/g, ' ')
-                  .replace(/\b\w/g, (l) => l.toUpperCase())}
-                : {formatStatValue(key, value)}</Badge>
+                <Badge className="bg-zinc-400 dark:bg-zinc-700 text-current uppercase">
+                  {key
+                    .replace(/_/g, ' ')
+                    .replace(/\b\w/g, (l) => l.toUpperCase())}
+                  : {formatStatValue(key, value)}
+                </Badge>
               </TooltipTrigger>
               <TooltipContent>
-                 {`${key}: ${formatStatValue(key, value)}`}
+                {`${key}: ${formatStatValue(key, value)}`}
               </TooltipContent>
             </Tooltip>
           ))}
@@ -328,7 +333,9 @@ const ChannelStreams = ({ channel, isExpanded }) => {
         {
           id: 'drag-handle',
           header: 'Move',
-          cell: ({ attributes, listeners }) => <RowDragHandleCell attributes={attributes} listeners={listeners} />,
+          cell: ({ attributes, listeners }) => (
+            <RowDragHandleCell attributes={attributes} listeners={listeners} />
+          ),
           size: 30,
         },
         {
@@ -352,11 +359,11 @@ const ChannelStreams = ({ channel, isExpanded }) => {
               <div>
                 <div className="flex gap-2 items-center">
                   <div className="font-medium text-sm">{stream.name}</div>
-                  <Badge className="bg-teal-900 text-teal-300 text-xs/3">
+                  <Badge className="bg-teal-900 text-teal-300">
                     {accountName}
                   </Badge>
                   {stream.quality && (
-                    <Badge className="bg-green-900 text-green-300 text-xs/3">
+                    <Badge className="bg-green-900 text-green-300">
                       {stream.quality}
                     </Badge>
                   )}
@@ -365,7 +372,7 @@ const ChannelStreams = ({ channel, isExpanded }) => {
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <Badge
-                            className="bg-indigo-500 text-indigo-200 cursor-pointer text-xs/3"
+                            className="bg-indigo-500 text-indigo-200 cursor-pointer"
                             onClick={async (e) => {
                               e.stopPropagation();
                               await copyToClipboard(stream.url, {
@@ -407,22 +414,22 @@ const ChannelStreams = ({ channel, isExpanded }) => {
                           Video:
                         </div>
                         {stream.stream_stats.resolution && (
-                          <Badge className="bg-red-900 text-red-300 text-xs/3">
+                          <Badge className="bg-red-900 text-red-300">
                             {stream.stream_stats.resolution}
                           </Badge>
                         )}
                         {stream.stream_stats.video_bitrate && (
-                          <Badge className="bg-orange-900 text-orange-300 text-xs/3">
+                          <Badge className="bg-orange-900 text-orange-300">
                             {stream.stream_stats.video_bitrate} kbps
                           </Badge>
                         )}
                         {stream.stream_stats.source_fps && (
-                          <Badge className="bg-orange-900 text-orange-300 text-xs/3">
+                          <Badge className="bg-orange-900 text-orange-300">
                             {stream.stream_stats.source_fps} FPS
                           </Badge>
                         )}
                         {stream.stream_stats.video_codec && (
-                          <Badge className="bg-blue-900 text-blue-300 text-xs/3">
+                          <Badge className="bg-blue-900 text-blue-300">
                             {stream.stream_stats.video_codec.toUpperCase()}
                           </Badge>
                         )}
@@ -437,12 +444,12 @@ const ChannelStreams = ({ channel, isExpanded }) => {
                           Audio:
                         </div>
                         {stream.stream_stats.audio_channels && (
-                          <Badge className="bg-pink-900 text-pink-300 text-xs/3">
+                          <Badge className="bg-pink-900 text-pink-300">
                             {stream.stream_stats.audio_channels}
                           </Badge>
                         )}
                         {stream.stream_stats.audio_codec && (
-                          <Badge className="bg-pink-900 text-pink-300 text-xs/3">
+                          <Badge className="bg-pink-900 text-pink-300">
                             {stream.stream_stats.audio_codec.toUpperCase()}
                           </Badge>
                         )}
@@ -456,7 +463,7 @@ const ChannelStreams = ({ channel, isExpanded }) => {
                           Output Bitrate:
                         </div>
                         {stream.stream_stats.ffmpeg_output_bitrate && (
-                          <Badge className="bg-orange-900 text-orange-300 text-xs/3">
+                          <Badge className="bg-orange-900 text-orange-300">
                             {stream.stream_stats.ffmpeg_output_bitrate} kbps
                           </Badge>
                         )}
@@ -469,9 +476,9 @@ const ChannelStreams = ({ channel, isExpanded }) => {
                 {hasAdvancedStats && (
                   <div className="flex gap-2 mt-2 items-center">
                     <Button
-                        className="cursor-pointer"
-                        variant="ghost"
-                        size="xs"
+                      className="cursor-pointer"
+                      variant="ghost"
+                      size="xs"
                       onClick={() => toggleAdvancedStats(stream.id)}
                     >
                       {expandedAdvancedStats.has(stream.id) ? (
@@ -488,7 +495,8 @@ const ChannelStreams = ({ channel, isExpanded }) => {
                 {/* Advanced Stats (expandable) */}
                 <Collapsible open={expandedAdvancedStats.has(stream.id)}>
                   <CollapsibleContent>
-                    <div className="p-2"
+                    <div
+                      className="p-2"
                       style={{
                         backgroundColor: 'rgba(0,0,0,0.1)',
                         borderRadius: '4px',

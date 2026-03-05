@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import useLogosStore from '~/store/logos';
+import useLogosStore from '@/store/logos';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 /**
  * Hook for components that need to display all logos (like logo selection popovers)

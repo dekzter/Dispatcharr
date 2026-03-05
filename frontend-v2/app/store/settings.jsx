@@ -1,17 +1,17 @@
-import { create } from "zustand";
-import api from "~/lib/api";
+import { create } from 'zustand';
+import api from '@/lib/api';
 
 const useSettingsStore = create((set, get) => ({
   settings: {},
   environment: {
     // Add default values for environment settings
-    public_ip: "",
-    country_code: "",
-    country_name: "",
-    env_mode: "prod",
+    public_ip: '',
+    country_code: '',
+    country_name: '',
+    env_mode: 'prod',
   },
   version: {
-    version: "",
+    version: '',
     timestamp: null,
   },
   isLoading: false,
@@ -37,24 +37,24 @@ const useSettingsStore = create((set, get) => ({
         }, {}),
         isLoading: false,
         environment: env || {
-          public_ip: "",
-          country_code: "",
-          country_name: "",
-          env_mode: "prod",
+          public_ip: '',
+          country_code: '',
+          country_name: '',
+          env_mode: 'prod',
         },
       };
 
       // Only update version if we fetched it
       if (versionData) {
         newState.version = {
-          version: versionData?.version || "",
+          version: versionData?.version || '',
           timestamp: versionData?.timestamp || null,
         };
       }
 
       set(newState);
     } catch (error) {
-      set({ error: "Failed to load settings.", isLoading: false });
+      set({ error: 'Failed to load settings.', isLoading: false });
     }
   },
 
@@ -67,13 +67,13 @@ const useSettingsStore = create((set, get) => ({
     try {
       const versionData = await api.getVersion();
       const version = {
-        version: versionData?.version || "",
+        version: versionData?.version || '',
         timestamp: versionData?.timestamp || null,
       };
       set({ version });
       return version;
     } catch (error) {
-      console.error("Failed to fetch version:", error);
+      console.error('Failed to fetch version:', error);
       return get().version;
     }
   },

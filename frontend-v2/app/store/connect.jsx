@@ -1,5 +1,5 @@
-import { create } from "zustand";
-import API from "~/lib/api";
+import { create } from 'zustand';
+import API from '@/lib/api';
 
 const useConnectStore = create((set, get) => ({
   integrations: [],
@@ -26,7 +26,7 @@ const useConnectStore = create((set, get) => ({
   updateIntegration: (integration) =>
     set((state) => ({
       integrations: state.integrations.map((i) =>
-        i.id === integration.id ? integration : i,
+        i.id === integration.id ? integration : i
       ),
     })),
 
@@ -38,7 +38,7 @@ const useConnectStore = create((set, get) => ({
   updateIntegrationSubscriptions: (id, events) =>
     set((state) => ({
       integrations: state.integrations.map((i) =>
-        i.id === id ? { ...i, subscriptions: events } : i,
+        i.id === id ? { ...i, subscriptions: events } : i
       ),
     })),
 }));

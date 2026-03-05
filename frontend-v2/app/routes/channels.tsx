@@ -1,12 +1,18 @@
-import { useCallback, useRef } from "react";
+import { useCallback, useRef, useState } from "react";
 import type { Route } from "./+types/channels";
-import { Allotment } from "allotment";
 import ChannelsTable from "./channels/ChannelsTable";
-import storage from "~/lib/safe-storage";
-import { getBaseUrl } from "~/lib/urls";
-import {USER_LEVELS} from '~/lib/constants'
-import useAuthStore from "~/store/auth";
-import useLogosStore from '~/store/logos'
+import StreamsTable from "./channels/StreamsTable";
+import storage from "@/lib/safe-storage";
+import { getBaseUrl } from "@/lib/urls";
+import {USER_LEVELS} from '@/lib/constants'
+import useAuthStore from "@/store/auth";
+import useLogosStore from '@/store/logos'
+import { useIsMobile } from "@/hooks/use-mobile";
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@/components/ui/resizable"
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -16,7 +22,6 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export async function loader({ request }: Route.LoaderArgs) {
-  // Extract base URLs from the request (works server-side AND client-side)
   return {
     baseUrl: getBaseUrl(request),
   };
@@ -28,17 +33,13 @@ export default function Channels({ loaderData }: Route.ComponentProps) {
     (s) => s.fetchChannelAssignableLogos
   );
   const enableLogoRendering = useLogosStore((s) => s.enableLogoRendering);
+  const isMobile = useIsMobile();
+  const [activeTab, setActiveTab] = useState<"channels" | "streams">("channels");
 
   const channelsReady = useRef(false);
   const streamsReady = useRef(false);
   const logosTriggered = useRef(false);
 
-  // const [allotmentSizes, setAllotmentSizes] = useLocalStorage(
-  //   'channels-splitter-sizes',
-  //   [50, 50]
-  // );
-
-  // Only load logos when BOTH tables are ready
   const tryLoadLogos = useCallback(() => {
     if (
       channelsReady.current &&
@@ -46,8 +47,6 @@ export default function Channels({ loaderData }: Route.ComponentProps) {
       !logosTriggered.current
     ) {
       logosTriggered.current = true;
-      // Use requestAnimationFrame to defer logo loading until after browser paint
-      // This ensures EPG column is fully rendered before logos start loading
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           enableLogoRendering();
@@ -67,17 +66,6 @@ export default function Channels({ loaderData }: Route.ComponentProps) {
     tryLoadLogos();
   }, [tryLoadLogos]);
 
-  // @TODO-v2: remove when streams table implemented
-  handleStreamsReady()
-
-  // const handleSplitChange = (sizes) => {
-  //   setAllotmentSizes(sizes);
-  // };
-
-  // const handleResize = (sizes) => {
-  //   setAllotmentSizes(sizes);
-  // };
-
     const defaultSizes = storage.getJSON<number[]>("channels-splitter-sizes") || [
     50, 50,
   ];
@@ -92,29 +80,64 @@ export default function Channels({ loaderData }: Route.ComponentProps) {
     handleStreamsReady();
     return (
       <div className="flex h-full w-full">
-        <ChannelsTable onReady={handleChannelsReady} />
+        <ChannelsTable onReady={handleChannelsReady} baseUrl={loaderData.baseUrl}/>
         </div>
     );
   }
 
   return (
-    <div className="flex h-full w-full">
-      <Allotment
-        defaultSizes={defaultSizes}
-        onChange={handleSplitChange}
-        className="h-full w-full"
-      >
-        <Allotment.Pane minSize={300}>
-          <div className="flex h-full flex-col p-2">
-            <ChannelsTable onReady={handleChannelsReady} />
+    <>
+      {/* Mobile: tab toggle, both panels stay mounted */}
+      {isMobile ? (
+        <div className="flex h-full w-full flex-col">
+          <div className="flex shrink-0 border-b">
+            <button
+              onClick={() => setActiveTab("channels")}
+              className={`flex-1 py-2 text-sm font-medium transition-colors ${
+                activeTab === "channels"
+                  ? "border-b-2 border-primary text-primary"
+                  : "text-muted-foreground"
+              }`}
+            >
+              Channels
+            </button>
+            <button
+              onClick={() => setActiveTab("streams")}
+              className={`flex-1 py-2 text-sm font-medium transition-colors ${
+                activeTab === "streams"
+                  ? "border-b-2 border-primary text-primary"
+                  : "text-muted-foreground"
+              }`}
+            >
+              Streams
+            </button>
           </div>
-        </Allotment.Pane>
-        <Allotment.Pane minSize={300}>
-          <div className="flex h-full flex-col p-2">
-            {/* <ChannelsTable/> */}
+          <div className={`flex h-full min-h-0 flex-col p-2 ${activeTab === "channels" ? "" : "hidden"}`}>
+            <ChannelsTable onReady={handleChannelsReady} baseUrl={loaderData.baseUrl} />
           </div>
-        </Allotment.Pane>
-      </Allotment>
-    </div>
-  );
+          <div className={`flex h-full min-h-0 flex-col p-2 ${activeTab === "streams" ? "" : "hidden"}`}>
+            <StreamsTable onReady={handleStreamsReady} />
+          </div>
+        </div>
+      ) : (
+        /* Desktop: resizable split panels */
+        <ResizablePanelGroup
+          orientation="horizontal"
+          className="w-full rounded-lg border"
+        >
+          <ResizablePanel defaultSize="50%">
+            <div className="flex h-full flex-col p-2">
+              <ChannelsTable onReady={handleChannelsReady} baseUrl={loaderData.baseUrl} />
+            </div>
+          </ResizablePanel>
+          <ResizableHandle withHandle />
+          <ResizablePanel defaultSize="50%">
+            <div className="flex h-full flex-col p-2">
+              <StreamsTable onReady={handleStreamsReady} />
+            </div>
+          </ResizablePanel>
+        </ResizablePanelGroup>
+      )}
+    </>
+  )
 }

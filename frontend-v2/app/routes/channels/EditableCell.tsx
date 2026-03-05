@@ -1,37 +1,28 @@
-import React, {
-  useState,
-  useCallback,
-  useEffect,
-  useRef,
-  useMemo,
-  memo,
-} from 'react';
-import API from '~/lib/api';
-import useChannelsTableStore from '~/store/channelsTable';
-import useLogosStore from '~/store/logos';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '~/components/ui/tooltip';
-import { Skeleton } from '~/components/ui/skeleton';
-import { Input } from '~/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '~/components/ui/select';
-import { Label } from '~/components/ui/label';
+import { SearchableInput } from '@/components/dispatcharr/searchable-input';
+import { Input } from '@/components/ui/input';
 import {
   Popover,
   PopoverAnchor,
   PopoverContent,
-  PopoverTrigger,
-} from '~/components/ui/popover';
+} from '@/components/ui/popover';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import API from '@/lib/api';
+import useChannelsTableStore from '@/store/channelsTable';
+import useLogosStore from '@/store/logos';
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { List } from 'react-window';
-import { SearchableInput } from '~/components/dispatcharr/searchable-input';
 
 // Lightweight wrapper that only renders full editable cell when unlocked
 // This prevents 250+ heavy component instances when table is locked
@@ -300,24 +291,6 @@ const EditableNumberCellInner = ({ row, column, getValue, onBlur }) => {
       onBlur={handleBlur}
       autoFocus
     />
-    // <NumberInput
-    //   value={value}
-    //   onChange={handleChange}
-    //   onBlur={handleBlur}
-    //   autoFocus
-    //   size="xs"
-    //   variant="unstyled"
-    //   hideControls
-    //   styles={{
-    //     input: {
-    //       minHeight: 'unset',
-    //       height: '100%',
-    //       padding: '0 4px',
-    //       textAlign: 'right',
-    //       backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    //     },
-    //   }}
-    // />
   );
 };
 
@@ -332,7 +305,7 @@ export const EditableGroupCell = ({ row, channelGroups }) => {
   if (!isUnlocked || !isFocused) {
     return (
       <div
-        className={`whitespace-nowrap text-overflow-ellipsis overflow-hidden px-4 ${isUnlocked ? 'cursor-text' : ''}`}
+        className={`h-full content-center whitespace-nowrap text-overflow-ellipsis overflow-hidden px-4 ${isUnlocked ? 'cursor-text' : ''}`}
         onClick={() => isUnlocked && setIsFocused(true)}
       >
         {groupName}
@@ -400,6 +373,7 @@ const EditableGroupCellInner = ({
       }))}
       onSelect={handleChange}
       onBlur={onBlur}
+      autoFocus={true}
     />
   );
 };
@@ -455,7 +429,7 @@ export const EditableEPGCell = ({
       <Tooltip>
         <TooltipTrigger asChild>
           <div
-            className={`ws-normal text-overflow-ellipsis px-4 ${isUnlocked ? 'cursor-text' : ''}`}
+            className={`h-full content-center ws-normal text-overflow-ellipsis px-4 ${isUnlocked ? 'cursor-text' : ''}`}
             onClick={() => isUnlocked && setIsFocused(true)}
           >
             {displayText}
@@ -578,6 +552,7 @@ const EditableEPGCellInner = ({
       options={epgOptions}
       onSelect={handleChange}
       onBlur={onBlur}
+      autoFocus={true}
     />
   );
 };
@@ -605,7 +580,7 @@ export const EditableLogoCell = ({
   if (!isUnlocked || !isFocused) {
     return (
       <div
-        className={`flex items-center justify-center whitespace-nowrap text-overflow-ellipsis overflow-hidden px-4 ${isUnlocked ? 'cursor-text' : ''}`}
+        className={`h-full content-center flex items-center justify-center whitespace-nowrap text-overflow-ellipsis overflow-hidden px-4 ${isUnlocked ? 'cursor-text' : ''}`}
         onClick={handleClick}
       >
         {LazyLogo && (

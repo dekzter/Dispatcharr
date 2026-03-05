@@ -1,7 +1,7 @@
 import { redirect } from 'react-router';
-import useAuthStore from '~/store/auth';
-import storage from '~/lib/safe-storage';
-import API from '~/lib/api';
+import useAuthStore from '@/store/auth';
+import storage from '@/lib/safe-storage';
+import API from '@/lib/api';
 
 /**
  * Check authentication status by validating stored token

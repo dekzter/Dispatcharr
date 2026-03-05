@@ -1,61 +1,47 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
-import { useForm } from 'react-hook-form';
-import { yupResolver } from '@hookform/resolvers/yup';
-import * as Yup from 'yup';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '~/components/ui/dialog';
-import { Button } from '~/components/ui/button';
-import { Label } from '~/components/ui/label';
-import API from '~/lib/api';
-import toast from '~/lib/toast';
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
-  Field,
-  FieldContent,
-  FieldDescription,
-  FieldLabel,
-} from '~/components/ui/field';
-import { RadioGroup, RadioGroupItem } from '~/components/ui/radio-group';
-import { Input } from '~/components/ui/input';
-import { Badge } from '~/components/ui/badge';
-import { X, ListOrdered } from 'lucide-react';
-import useSettingsStore from '~/store/settings';
-import { getChangedSettings, saveChangedSettings } from '~/lib/settings-utils';
-import useChannelsStore from '~/store/channels';
-import { useChannelLogoSelection } from '~/hooks/use-smart-logos';
-import useLogosStore from '~/store/logos';
-import useStreamProfilesStore from '~/store/streamProfiles';
-import useEPGsStore from '~/store/epgs';
-import { List } from 'react-window';
-import { USER_LEVELS, USER_LEVEL_LABELS } from '~/lib/constants';
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '~/components/ui/select';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '~/components/ui/popover';
-import { ScrollArea } from '~/components/ui/scroll-area';
+} from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
+import { Switch } from '@/components/ui/switch';
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
-} from '~/components/ui/tooltip';
-import { Separator } from '~/components/ui/separator';
-import { Switch } from '~/components/ui/switch';
+} from '@/components/ui/tooltip';
+import { useChannelLogoSelection } from '@/hooks/use-smart-logos';
+import API from '@/lib/api';
+import { USER_LEVELS, USER_LEVEL_LABELS } from '@/lib/constants';
+import toast from '@/lib/toast';
+import useChannelsStore from '@/store/channels';
+import useEPGsStore from '@/store/epgs';
+import useLogosStore from '@/store/logos';
+import useStreamProfilesStore from '@/store/streamProfiles';
+import { yupResolver } from '@hookform/resolvers/yup';
+import { ListOrdered } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import { List } from 'react-window';
+import * as Yup from 'yup';
 import LogoForm from './LogoForm';
-import { Card } from '~/components/ui/card';
 
 const validationSchema = Yup.object({
   name: Yup.string().required('Name is required'),
@@ -327,6 +313,7 @@ export default function ChannelForm({ channel, isOpen, onClose }: any) {
     setValue,
     watch,
     reset,
+    control,
     formState: { errors, isSubmitting },
   } = useForm({
     defaultValues,
@@ -534,7 +521,7 @@ export default function ChannelForm({ channel, isOpen, onClose }: any) {
         <form onSubmit={onSubmit}>
           <div className="space-y-4">
             <div className="flex justify-between items-start gap-4">
-              <div className="flex flex-col gap-2 w-full">
+              <div className="flex flex-col gap-4 h-full w-full">
                 <div className="space-y-1">
                   <Label htmlFor="channel-name" className="">
                     Channel Name
@@ -742,36 +729,73 @@ export default function ChannelForm({ channel, isOpen, onClose }: any) {
 
               <Separator orientation="vertical" className="!h-[200px]" />
 
-              <div className="flex w-full">
-                <div className="w-full">
-                  <Label htmlFor="stream-profile" className="">
-                    Stream Profile
-                  </Label>
-                  <Select
-                    value={watch('stream_profile_id')}
-                    onValueChange={(value) => {
-                      setValue('stream_profile_id', value);
-                    }}
-                  >
-                    <SelectTrigger id="stream-profile" className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {[{ value: '0', label: '(use default)' }]
-                        .concat(
-                          streamProfiles.map((option) => ({
-                            value: `${option.id}`,
-                            label: option.name,
-                          }))
-                        )
-                        .map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div className="flex flex-col justify-start items-start gap-4 h-full w-full">
+                <Controller
+                  name="channel-number"
+                  validater={(value) => {
+                    if (value === '') return true; // Allow blank for auto-assign
+                    const number = parseInt(value, 10);
+                    return !isNaN(number) && number > 0;
+                  }}
+                  control={control}
+                  render={({ field }) => (
+                    <div className="w-full space-y-1">
+                      <Label htmlFor="channel-number" className="">
+                        Channel # (blank to auto-assign)
+                      </Label>
+                      <Input
+                        id="channel-number"
+                        type="number"
+                        min={1}
+                        {...field}
+                      />
+                    </div>
+                  )}
+                />
+
+                <Controller
+                  name="tvg_id"
+                  validater={(value) => {
+                    if (value === '') return true; // Allow blank for auto-assign
+                    const number = parseInt(value, 10);
+                    return !isNaN(number) && number > 0;
+                  }}
+                  control={control}
+                  render={({ field }) => (
+                    <div className="w-full space-y-1">
+                      <Label htmlFor="tvg_id" className="">
+                        TVG ID
+                        {watch('epg_data_id') && (
+                          <Button
+                            size="xs"
+                            variant="outline"
+                            onClick={handleSetTvgIdFromEpg}
+                            title="Set TVG-ID from EPG data"
+                          >
+                            Use EPG TVG-ID
+                          </Button>
+                        )}
+                      </Label>
+                      <Input id="tvg_id" {...register('tvg_id')} />
+                    </div>
+                  )}
+                />
+
+                <Controller
+                  name="tvc_guide_stationid"
+                  control={control}
+                  render={({ field }) => (
+                    <div className="w-full space-y-1">
+                      <Label htmlFor="tvc_guide_stationid" className="">
+                        Gracenote StationId
+                      </Label>
+                      <Input
+                        id="tvc_guide_stationid"
+                        {...register('tvc_guide_stationid')}
+                      />
+                    </div>
+                  )}
+                />
               </div>
             </div>
 

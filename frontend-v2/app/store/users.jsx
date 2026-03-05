@@ -1,5 +1,5 @@
-import { create } from "zustand";
-import api from "~/lib/api";
+import { create } from 'zustand';
+import api from '@/lib/api';
 
 const useUsersStore = create((set) => ({
   users: [],
@@ -15,8 +15,8 @@ const useUsersStore = create((set) => ({
         isLoading: false,
       });
     } catch (error) {
-      console.error("Failed to fetch users:", error);
-      set({ error: "Failed to load users.", isLoading: false });
+      console.error('Failed to fetch users:', error);
+      set({ error: 'Failed to load users.', isLoading: false });
     }
   },
 
@@ -28,7 +28,7 @@ const useUsersStore = create((set) => ({
   updateUser: (updatedUser) =>
     set((state) => ({
       users: state.users.map((user) =>
-        user.id === updatedUser.id ? updatedUser : user,
+        user.id === updatedUser.id ? updatedUser : user
       ),
     })),
 

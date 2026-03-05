@@ -1,5 +1,5 @@
-import { create } from "zustand";
-import api from "~/lib/api";
+import { create } from 'zustand';
+import api from '@/lib/api';
 
 const useStreamProfilesStore = create((set) => ({
   profiles: [],
@@ -12,8 +12,8 @@ const useStreamProfilesStore = create((set) => ({
       const profiles = await api.getStreamProfiles();
       set({ profiles: profiles, isLoading: false });
     } catch (error) {
-      console.error("Failed to fetch profiles:", error);
-      set({ error: "Failed to load profiles.", isLoading: false });
+      console.error('Failed to fetch profiles:', error);
+      set({ error: 'Failed to load profiles.', isLoading: false });
     }
   },
 
@@ -25,14 +25,14 @@ const useStreamProfilesStore = create((set) => ({
   updateStreamProfile: (profile) =>
     set((state) => ({
       profiles: state.profiles.map((prof) =>
-        prof.id === profile.id ? profile : prof,
+        prof.id === profile.id ? profile : prof
       ),
     })),
 
   removeStreamProfiles: (propfileIds) =>
     set((state) => ({
       profiles: state.profiles.filter(
-        (profile) => !propfileIds.includes(profile.id),
+        (profile) => !propfileIds.includes(profile.id)
       ),
     })),
 }));

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -6,13 +6,13 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "~/components/ui/dialog";
-import { Button } from "~/components/ui/button";
-import { Input } from "~/components/ui/input";
-import { Label } from "~/components/ui/label";
-import { ListOrdered } from "lucide-react";
-import API from "~/lib/api";
-import toast from "~/lib/toast";
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import API from '@/lib/api';
+import toast from '@/lib/toast';
+import { ListOrdered } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 interface AssignChannelNumbersFormProps {
   channelIds: number[];
@@ -39,7 +39,7 @@ export default function AssignChannelNumbersForm({
     e.preventDefault();
 
     if (!channelIds || channelIds.length === 0) {
-      toast.error("No channels selected");
+      toast.error('No channels selected');
       return;
     }
 
@@ -48,15 +48,15 @@ export default function AssignChannelNumbersForm({
     try {
       const result = await API.assignChannelNumbers(channelIds, startingNumber);
 
-      toast.success(result?.message || "Channels assigned successfully");
+      toast.success(result?.message || 'Channels assigned successfully');
 
       // Re-query channels to update the table
       await API.requeryChannels();
 
       onClose();
     } catch (err) {
-      console.error("Failed to assign channel numbers:", err);
-      toast.error("Failed to assign channel numbers");
+      console.error('Failed to assign channel numbers:', err);
+      toast.error('Failed to assign channel numbers');
     } finally {
       setIsSubmitting(false);
     }
@@ -71,10 +71,12 @@ export default function AssignChannelNumbersForm({
             Assign Channel Numbers
           </DialogTitle>
           <DialogDescription>
-            Assign sequential channel numbers starting from the specified number.
+            Assign sequential channel numbers starting from the specified
+            number.
             {channelIds.length > 0 && (
               <span className="block mt-1 text-sm">
-                {channelIds.length} channel{channelIds.length !== 1 ? "s" : ""} selected
+                {channelIds.length} channel{channelIds.length !== 1 ? 's' : ''}{' '}
+                selected
               </span>
             )}
           </DialogDescription>
@@ -107,7 +109,7 @@ export default function AssignChannelNumbersForm({
               Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Assigning..." : "Assign"}
+              {isSubmitting ? 'Assigning...' : 'Assign'}
             </Button>
           </DialogFooter>
         </form>

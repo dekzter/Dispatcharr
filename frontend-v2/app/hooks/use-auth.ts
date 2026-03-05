@@ -1,6 +1,6 @@
-import { useEffect } from "react";
-import { useNavigate } from "react-router";
-import { auth } from "~/lib/api";
+import { auth } from '@/lib/api';
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router';
 
 /**
  * Hook to protect routes - redirects to login if not authenticated
@@ -10,7 +10,7 @@ export function useAuth() {
 
   useEffect(() => {
     if (!auth.isAuthenticated()) {
-      navigate("/login", { replace: true });
+      navigate('/login', { replace: true });
     }
   }, [navigate]);
 
@@ -28,7 +28,7 @@ export function useLogout() {
 
   const logout = () => {
     auth.removeToken();
-    navigate("/login", { replace: true });
+    navigate('/login', { replace: true });
   };
 
   return logout;

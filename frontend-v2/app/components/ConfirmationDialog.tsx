@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -6,14 +7,13 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "~/components/ui/dialog";
-import { Button } from "~/components/ui/button";
-import { Checkbox } from "~/components/ui/checkbox";
-import { Label } from "~/components/ui/label";
-import useWarningsStore from "~/store/warnings";
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import useWarningsStore from "@/store/warnings";
+import { useState } from "react";
 
 interface ConfirmationDialogProps {
-  open: boolean;
+  opened: boolean;
   onOpenChange: (open: boolean) => void;
   onConfirm: (deleteFiles?: boolean) => void;
   title?: string;
@@ -35,7 +35,7 @@ interface ConfirmationDialogProps {
 }
 
 export default function ConfirmationDialog({
-  open,
+  opened,
   onOpenChange,
   onConfirm,
   title = "Confirm Action",
@@ -81,7 +81,7 @@ export default function ConfirmationDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={opened} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>

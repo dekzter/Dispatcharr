@@ -1,12 +1,12 @@
-import { renderHook, act, waitFor } from "@testing-library/react";
-import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
-import useEPGsStore from "../epgs";
-import api from "../~/lib/api";
+import { renderHook, act, waitFor } from '@testing-library/react';
+import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
+import useEPGsStore from '../epgs';
+import api from '../@/lib/api';
 
 // Mock the api module
-vi.mock("../~/lib/api");
+vi.mock('../@/lib/api');
 
-describe("useEPGsStore", () => {
+describe('useEPGsStore', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
@@ -26,8 +26,8 @@ describe("useEPGsStore", () => {
     vi.restoreAllMocks();
   });
 
-  describe("initial state", () => {
-    it("should initialize with default values", () => {
+  describe('initial state', () => {
+    it('should initialize with default values', () => {
       const { result } = renderHook(() => useEPGsStore());
 
       expect(result.current.epgs).toEqual({});
@@ -40,11 +40,11 @@ describe("useEPGsStore", () => {
     });
   });
 
-  describe("fetchEPGs", () => {
-    it("should fetch and store EPGs successfully", async () => {
+  describe('fetchEPGs', () => {
+    it('should fetch and store EPGs successfully', async () => {
       const mockEPGs = [
-        { id: "epg1", name: "EPG 1", status: "idle" },
-        { id: "epg2", name: "EPG 2", status: "success" },
+        { id: 'epg1', name: 'EPG 1', status: 'idle' },
+        { id: 'epg2', name: 'EPG 2', status: 'success' },
       ];
 
       api.getEPGs.mockResolvedValue(mockEPGs);
@@ -56,17 +56,17 @@ describe("useEPGsStore", () => {
       });
 
       expect(result.current.epgs).toEqual({
-        epg1: { id: "epg1", name: "EPG 1", status: "idle" },
-        epg2: { id: "epg2", name: "EPG 2", status: "success" },
+        epg1: { id: 'epg1', name: 'EPG 1', status: 'idle' },
+        epg2: { id: 'epg2', name: 'EPG 2', status: 'success' },
       });
       expect(result.current.isLoading).toBe(false);
       expect(result.current.error).toBeNull();
       expect(api.getEPGs).toHaveBeenCalledTimes(1);
     });
 
-    it("should set loading state while fetching", async () => {
+    it('should set loading state while fetching', async () => {
       api.getEPGs.mockImplementation(
-        () => new Promise((resolve) => setTimeout(() => resolve([]), 100)),
+        () => new Promise((resolve) => setTimeout(() => resolve([]), 100))
       );
 
       const { result } = renderHook(() => useEPGsStore());
@@ -85,12 +85,12 @@ describe("useEPGsStore", () => {
       expect(result.current.isLoading).toBe(false);
     });
 
-    it("should handle fetch error", async () => {
-      const mockError = new Error("Network error");
+    it('should handle fetch error', async () => {
+      const mockError = new Error('Network error');
       api.getEPGs.mockRejectedValue(mockError);
 
       const consoleSpy = vi
-        .spyOn(console, "error")
+        .spyOn(console, 'error')
         .mockImplementation(() => {});
       const { result } = renderHook(() => useEPGsStore());
 
@@ -98,17 +98,17 @@ describe("useEPGsStore", () => {
         await result.current.fetchEPGs();
       });
 
-      expect(result.current.error).toBe("Failed to load epgs.");
+      expect(result.current.error).toBe('Failed to load epgs.');
       expect(result.current.isLoading).toBe(false);
       expect(consoleSpy).toHaveBeenCalledWith(
-        "Failed to fetch epgs:",
-        mockError,
+        'Failed to fetch epgs:',
+        mockError
       );
 
       consoleSpy.mockRestore();
     });
 
-    it("should handle empty EPGs array", async () => {
+    it('should handle empty EPGs array', async () => {
       api.getEPGs.mockResolvedValue([]);
 
       const { result } = renderHook(() => useEPGsStore());
@@ -122,11 +122,11 @@ describe("useEPGsStore", () => {
     });
   });
 
-  describe("fetchEPGData", () => {
-    it("should fetch and store TVG data successfully", async () => {
+  describe('fetchEPGData', () => {
+    it('should fetch and store TVG data successfully', async () => {
       const mockTVGs = [
-        { id: "tvg1", name: "TVG 1" },
-        { id: "tvg2", name: "TVG 2" },
+        { id: 'tvg1', name: 'TVG 1' },
+        { id: 'tvg2', name: 'TVG 2' },
       ];
 
       api.getEPGData.mockResolvedValue(mockTVGs);
@@ -139,8 +139,8 @@ describe("useEPGsStore", () => {
 
       expect(result.current.tvgs).toEqual(mockTVGs);
       expect(result.current.tvgsById).toEqual({
-        tvg1: { id: "tvg1", name: "TVG 1" },
-        tvg2: { id: "tvg2", name: "TVG 2" },
+        tvg1: { id: 'tvg1', name: 'TVG 1' },
+        tvg2: { id: 'tvg2', name: 'TVG 2' },
       });
       expect(result.current.tvgsLoaded).toBe(true);
       expect(result.current.isLoading).toBe(false);
@@ -148,9 +148,9 @@ describe("useEPGsStore", () => {
       expect(api.getEPGData).toHaveBeenCalledTimes(1);
     });
 
-    it("should set loading state while fetching", async () => {
+    it('should set loading state while fetching', async () => {
       api.getEPGData.mockImplementation(
-        () => new Promise((resolve) => setTimeout(() => resolve([]), 100)),
+        () => new Promise((resolve) => setTimeout(() => resolve([]), 100))
       );
 
       const { result } = renderHook(() => useEPGsStore());
@@ -168,12 +168,12 @@ describe("useEPGsStore", () => {
       expect(result.current.isLoading).toBe(false);
     });
 
-    it("should handle fetch error", async () => {
-      const mockError = new Error("API error");
+    it('should handle fetch error', async () => {
+      const mockError = new Error('API error');
       api.getEPGData.mockRejectedValue(mockError);
 
       const consoleSpy = vi
-        .spyOn(console, "error")
+        .spyOn(console, 'error')
         .mockImplementation(() => {});
       const { result } = renderHook(() => useEPGsStore());
 
@@ -181,18 +181,18 @@ describe("useEPGsStore", () => {
         await result.current.fetchEPGData();
       });
 
-      expect(result.current.error).toBe("Failed to load tvgs.");
+      expect(result.current.error).toBe('Failed to load tvgs.');
       expect(result.current.tvgsLoaded).toBe(true);
       expect(result.current.isLoading).toBe(false);
       expect(consoleSpy).toHaveBeenCalledWith(
-        "Failed to fetch tvgs:",
-        mockError,
+        'Failed to fetch tvgs:',
+        mockError
       );
 
       consoleSpy.mockRestore();
     });
 
-    it("should handle empty TVG array", async () => {
+    it('should handle empty TVG array', async () => {
       api.getEPGData.mockResolvedValue([]);
 
       const { result } = renderHook(() => useEPGsStore());
@@ -207,11 +207,11 @@ describe("useEPGsStore", () => {
     });
   });
 
-  describe("addEPG", () => {
-    it("should add new EPG to store", () => {
+  describe('addEPG', () => {
+    it('should add new EPG to store', () => {
       const { result } = renderHook(() => useEPGsStore());
 
-      const newEPG = { id: "epg1", name: "New EPG", status: "idle" };
+      const newEPG = { id: 'epg1', name: 'New EPG', status: 'idle' };
 
       act(() => {
         result.current.addEPG(newEPG);
@@ -222,11 +222,11 @@ describe("useEPGsStore", () => {
       });
     });
 
-    it("should add multiple EPGs", () => {
+    it('should add multiple EPGs', () => {
       const { result } = renderHook(() => useEPGsStore());
 
-      const epg1 = { id: "epg1", name: "EPG 1", status: "idle" };
-      const epg2 = { id: "epg2", name: "EPG 2", status: "success" };
+      const epg1 = { id: 'epg1', name: 'EPG 1', status: 'idle' };
+      const epg2 = { id: 'epg2', name: 'EPG 2', status: 'success' };
 
       act(() => {
         result.current.addEPG(epg1);
@@ -239,11 +239,11 @@ describe("useEPGsStore", () => {
       });
     });
 
-    it("should not overwrite existing EPGs", () => {
+    it('should not overwrite existing EPGs', () => {
       const { result } = renderHook(() => useEPGsStore());
 
-      const originalEPG = { id: "epg1", name: "Original", status: "idle" };
-      const newEPG = { id: "epg2", name: "New", status: "success" };
+      const originalEPG = { id: 'epg1', name: 'Original', status: 'idle' };
+      const newEPG = { id: 'epg2', name: 'New', status: 'success' };
 
       act(() => {
         result.current.addEPG(originalEPG);
@@ -257,12 +257,12 @@ describe("useEPGsStore", () => {
     });
   });
 
-  describe("updateEPG", () => {
-    it("should update existing EPG", () => {
+  describe('updateEPG', () => {
+    it('should update existing EPG', () => {
       const { result } = renderHook(() => useEPGsStore());
 
-      const originalEPG = { id: "epg1", name: "Original", status: "idle" };
-      const updatedEPG = { id: "epg1", name: "Updated", status: "success" };
+      const originalEPG = { id: 'epg1', name: 'Original', status: 'idle' };
+      const updatedEPG = { id: 'epg1', name: 'Updated', status: 'success' };
 
       act(() => {
         result.current.addEPG(originalEPG);
@@ -275,10 +275,10 @@ describe("useEPGsStore", () => {
       expect(result.current.epgs.epg1).toEqual(updatedEPG);
     });
 
-    it("should add EPG if it does not exist", () => {
+    it('should add EPG if it does not exist', () => {
       const { result } = renderHook(() => useEPGsStore());
 
-      const newEPG = { id: "epg1", name: "New", status: "idle" };
+      const newEPG = { id: 'epg1', name: 'New', status: 'idle' };
 
       act(() => {
         result.current.updateEPG(newEPG);
@@ -287,13 +287,13 @@ describe("useEPGsStore", () => {
       expect(result.current.epgs.epg1).toEqual(newEPG);
     });
 
-    it("should not update state when called with invalid epg (null)", () => {
+    it('should not update state when called with invalid epg (null)', () => {
       const consoleSpy = vi
-        .spyOn(console, "error")
+        .spyOn(console, 'error')
         .mockImplementation(() => {});
       const { result } = renderHook(() => useEPGsStore());
 
-      const initialEPGs = { epg1: { id: "epg1", name: "Test" } };
+      const initialEPGs = { epg1: { id: 'epg1', name: 'Test' } };
       act(() => {
         useEPGsStore.setState({ epgs: initialEPGs });
       });
@@ -304,25 +304,25 @@ describe("useEPGsStore", () => {
 
       expect(result.current.epgs).toEqual(initialEPGs);
       expect(consoleSpy).toHaveBeenCalledWith(
-        "updateEPG called with invalid epg:",
-        null,
+        'updateEPG called with invalid epg:',
+        null
       );
 
       consoleSpy.mockRestore();
     });
 
-    it("should not update state when called with invalid epg (missing id)", () => {
+    it('should not update state when called with invalid epg (missing id)', () => {
       const consoleSpy = vi
-        .spyOn(console, "error")
+        .spyOn(console, 'error')
         .mockImplementation(() => {});
       const { result } = renderHook(() => useEPGsStore());
 
-      const initialEPGs = { epg1: { id: "epg1", name: "Test" } };
+      const initialEPGs = { epg1: { id: 'epg1', name: 'Test' } };
       act(() => {
         useEPGsStore.setState({ epgs: initialEPGs });
       });
 
-      const invalidEPG = { name: "No ID" };
+      const invalidEPG = { name: 'No ID' };
 
       act(() => {
         result.current.updateEPG(invalidEPG);
@@ -330,87 +330,87 @@ describe("useEPGsStore", () => {
 
       expect(result.current.epgs).toEqual(initialEPGs);
       expect(consoleSpy).toHaveBeenCalledWith(
-        "updateEPG called with invalid epg:",
-        invalidEPG,
+        'updateEPG called with invalid epg:',
+        invalidEPG
       );
 
       consoleSpy.mockRestore();
     });
 
-    it("should not update state when called with invalid epg (non-object)", () => {
+    it('should not update state when called with invalid epg (non-object)', () => {
       const consoleSpy = vi
-        .spyOn(console, "error")
+        .spyOn(console, 'error')
         .mockImplementation(() => {});
       const { result } = renderHook(() => useEPGsStore());
 
-      const initialEPGs = { epg1: { id: "epg1", name: "Test" } };
+      const initialEPGs = { epg1: { id: 'epg1', name: 'Test' } };
       act(() => {
         useEPGsStore.setState({ epgs: initialEPGs });
       });
 
       act(() => {
-        result.current.updateEPG("invalid");
+        result.current.updateEPG('invalid');
       });
 
       expect(result.current.epgs).toEqual(initialEPGs);
       expect(consoleSpy).toHaveBeenCalledWith(
-        "updateEPG called with invalid epg:",
-        "invalid",
+        'updateEPG called with invalid epg:',
+        'invalid'
       );
 
       consoleSpy.mockRestore();
     });
   });
 
-  describe("removeEPGs", () => {
-    it("should remove single EPG", () => {
+  describe('removeEPGs', () => {
+    it('should remove single EPG', () => {
       const { result } = renderHook(() => useEPGsStore());
 
       act(() => {
         useEPGsStore.setState({
           epgs: {
-            epg1: { id: "epg1", name: "EPG 1" },
-            epg2: { id: "epg2", name: "EPG 2" },
+            epg1: { id: 'epg1', name: 'EPG 1' },
+            epg2: { id: 'epg2', name: 'EPG 2' },
           },
         });
       });
 
       act(() => {
-        result.current.removeEPGs(["epg1"]);
+        result.current.removeEPGs(['epg1']);
       });
 
       expect(result.current.epgs).toEqual({
-        epg2: { id: "epg2", name: "EPG 2" },
+        epg2: { id: 'epg2', name: 'EPG 2' },
       });
     });
 
-    it("should remove multiple EPGs", () => {
+    it('should remove multiple EPGs', () => {
       const { result } = renderHook(() => useEPGsStore());
 
       act(() => {
         useEPGsStore.setState({
           epgs: {
-            epg1: { id: "epg1", name: "EPG 1" },
-            epg2: { id: "epg2", name: "EPG 2" },
-            epg3: { id: "epg3", name: "EPG 3" },
+            epg1: { id: 'epg1', name: 'EPG 1' },
+            epg2: { id: 'epg2', name: 'EPG 2' },
+            epg3: { id: 'epg3', name: 'EPG 3' },
           },
         });
       });
 
       act(() => {
-        result.current.removeEPGs(["epg1", "epg3"]);
+        result.current.removeEPGs(['epg1', 'epg3']);
       });
 
       expect(result.current.epgs).toEqual({
-        epg2: { id: "epg2", name: "EPG 2" },
+        epg2: { id: 'epg2', name: 'EPG 2' },
       });
     });
 
-    it("should handle removing non-existent EPG", () => {
+    it('should handle removing non-existent EPG', () => {
       const { result } = renderHook(() => useEPGsStore());
 
       const initialEPGs = {
-        epg1: { id: "epg1", name: "EPG 1" },
+        epg1: { id: 'epg1', name: 'EPG 1' },
       };
 
       act(() => {
@@ -418,17 +418,17 @@ describe("useEPGsStore", () => {
       });
 
       act(() => {
-        result.current.removeEPGs(["nonexistent"]);
+        result.current.removeEPGs(['nonexistent']);
       });
 
       expect(result.current.epgs).toEqual(initialEPGs);
     });
 
-    it("should handle empty array", () => {
+    it('should handle empty array', () => {
       const { result } = renderHook(() => useEPGsStore());
 
       const initialEPGs = {
-        epg1: { id: "epg1", name: "EPG 1" },
+        epg1: { id: 'epg1', name: 'EPG 1' },
       };
 
       act(() => {
@@ -443,131 +443,131 @@ describe("useEPGsStore", () => {
     });
   });
 
-  describe("updateEPGProgress", () => {
+  describe('updateEPGProgress', () => {
     beforeEach(() => {
       act(() => {
         useEPGsStore.setState({
           epgs: {
-            source1: { id: "source1", status: "idle", last_message: "" },
+            source1: { id: 'source1', status: 'idle', last_message: '' },
           },
         });
       });
     });
 
-    it("should update progress for downloading action", () => {
+    it('should update progress for downloading action', () => {
       const { result } = renderHook(() => useEPGsStore());
 
       act(() => {
         result.current.updateEPGProgress({
-          source: "source1",
-          action: "downloading",
+          source: 'source1',
+          action: 'downloading',
           progress: 50,
-          speed: "1.5 MB/s",
-          elapsed_time: "00:00:30",
-          time_remaining: "00:00:30",
+          speed: '1.5 MB/s',
+          elapsed_time: '00:00:30',
+          time_remaining: '00:00:30',
         });
       });
 
       expect(result.current.refreshProgress.source1).toEqual({
-        action: "downloading",
+        action: 'downloading',
         progress: 50,
-        speed: "1.5 MB/s",
-        elapsed_time: "00:00:30",
-        time_remaining: "00:00:30",
-        status: "in_progress",
+        speed: '1.5 MB/s',
+        elapsed_time: '00:00:30',
+        time_remaining: '00:00:30',
+        status: 'in_progress',
       });
-      expect(result.current.epgs.source1.status).toBe("fetching");
+      expect(result.current.epgs.source1.status).toBe('fetching');
     });
 
-    it("should update progress for parsing_channels action", () => {
+    it('should update progress for parsing_channels action', () => {
       const { result } = renderHook(() => useEPGsStore());
 
       act(() => {
         result.current.updateEPGProgress({
-          source: "source1",
-          action: "parsing_channels",
+          source: 'source1',
+          action: 'parsing_channels',
           progress: 75,
         });
       });
 
-      expect(result.current.epgs.source1.status).toBe("parsing");
+      expect(result.current.epgs.source1.status).toBe('parsing');
     });
 
-    it("should update progress for parsing_programs action", () => {
+    it('should update progress for parsing_programs action', () => {
       const { result } = renderHook(() => useEPGsStore());
 
       act(() => {
         result.current.updateEPGProgress({
-          source: "source1",
-          action: "parsing_programs",
+          source: 'source1',
+          action: 'parsing_programs',
           progress: 90,
         });
       });
 
-      expect(result.current.epgs.source1.status).toBe("parsing");
+      expect(result.current.epgs.source1.status).toBe('parsing');
     });
 
-    it("should set status to success when progress is 100", () => {
+    it('should set status to success when progress is 100', () => {
       const { result } = renderHook(() => useEPGsStore());
 
       act(() => {
         result.current.updateEPGProgress({
-          source: "source1",
-          action: "success",
+          source: 'source1',
+          action: 'success',
           progress: 100,
         });
       });
 
-      expect(result.current.epgs.source1.status).toBe("success");
+      expect(result.current.epgs.source1.status).toBe('success');
     });
 
-    it("should use explicit status from data", () => {
+    it('should use explicit status from data', () => {
       const { result } = renderHook(() => useEPGsStore());
 
       act(() => {
         result.current.updateEPGProgress({
-          source: "source1",
-          status: "error",
+          source: 'source1',
+          status: 'error',
           progress: 50,
         });
       });
 
-      expect(result.current.epgs.source1.status).toBe("error");
-      expect(result.current.refreshProgress.source1.status).toBe("error");
+      expect(result.current.epgs.source1.status).toBe('error');
+      expect(result.current.refreshProgress.source1.status).toBe('error');
     });
 
-    it("should set last_message on error status", () => {
+    it('should set last_message on error status', () => {
       const { result } = renderHook(() => useEPGsStore());
 
       act(() => {
         result.current.updateEPGProgress({
-          source: "source1",
-          status: "error",
-          error: "Connection failed",
+          source: 'source1',
+          status: 'error',
+          error: 'Connection failed',
         });
       });
 
       expect(result.current.epgs.source1.last_message).toBe(
-        "Connection failed",
+        'Connection failed'
       );
     });
 
-    it("should use default error message if error is not provided", () => {
+    it('should use default error message if error is not provided', () => {
       const { result } = renderHook(() => useEPGsStore());
 
       act(() => {
         result.current.updateEPGProgress({
-          source: "source1",
-          status: "error",
+          source: 'source1',
+          status: 'error',
         });
       });
 
-      expect(result.current.epgs.source1.last_message).toBe("Unknown error");
+      expect(result.current.epgs.source1.last_message).toBe('Unknown error');
     });
 
-    it("should not update state when called with invalid data (null)", () => {
+    it('should not update state when called with invalid data (null)', () => {
       const consoleSpy = vi
-        .spyOn(console, "error")
+        .spyOn(console, 'error')
         .mockImplementation(() => {});
       const { result } = renderHook(() => useEPGsStore());
 
@@ -581,16 +581,16 @@ describe("useEPGsStore", () => {
       expect(result.current.epgs).toEqual(initialEPGs);
       expect(result.current.refreshProgress).toEqual(initialProgress);
       expect(consoleSpy).toHaveBeenCalledWith(
-        "updateEPGProgress called with invalid data:",
-        null,
+        'updateEPGProgress called with invalid data:',
+        null
       );
 
       consoleSpy.mockRestore();
     });
 
-    it("should not update state when called with invalid data (missing source)", () => {
+    it('should not update state when called with invalid data (missing source)', () => {
       const consoleSpy = vi
-        .spyOn(console, "error")
+        .spyOn(console, 'error')
         .mockImplementation(() => {});
       const { result } = renderHook(() => useEPGsStore());
 
@@ -604,14 +604,14 @@ describe("useEPGsStore", () => {
       expect(result.current.epgs).toEqual(initialEPGs);
       expect(result.current.refreshProgress).toEqual(initialProgress);
       expect(consoleSpy).toHaveBeenCalledWith(
-        "updateEPGProgress called with invalid data:",
-        { progress: 50 },
+        'updateEPGProgress called with invalid data:',
+        { progress: 50 }
       );
 
       consoleSpy.mockRestore();
     });
 
-    it("should not update state when source does not exist and no status", () => {
+    it('should not update state when source does not exist and no status', () => {
       const { result } = renderHook(() => useEPGsStore());
 
       const initialEPGs = { ...result.current.epgs };
@@ -619,7 +619,7 @@ describe("useEPGsStore", () => {
 
       act(() => {
         result.current.updateEPGProgress({
-          source: "nonexistent",
+          source: 'nonexistent',
           progress: 50,
         });
       });
@@ -628,13 +628,13 @@ describe("useEPGsStore", () => {
       expect(result.current.refreshProgress).toEqual(initialProgress);
     });
 
-    it("should update refreshProgress even when source does not exist but status is provided", () => {
+    it('should update refreshProgress even when source does not exist but status is provided', () => {
       const { result } = renderHook(() => useEPGsStore());
 
       act(() => {
         result.current.updateEPGProgress({
-          source: "newSource",
-          status: "success",
+          source: 'newSource',
+          status: 'success',
           progress: 100,
         });
       });
@@ -645,17 +645,17 @@ describe("useEPGsStore", () => {
         speed: undefined,
         elapsed_time: undefined,
         time_remaining: undefined,
-        status: "success",
+        status: 'success',
       });
     });
 
-    it("should not update EPG if status and last_message have not changed", () => {
+    it('should not update EPG if status and last_message have not changed', () => {
       const { result } = renderHook(() => useEPGsStore());
 
       act(() => {
         useEPGsStore.setState({
           epgs: {
-            source1: { id: "source1", status: "fetching", last_message: "" },
+            source1: { id: 'source1', status: 'fetching', last_message: '' },
           },
         });
       });
@@ -664,8 +664,8 @@ describe("useEPGsStore", () => {
 
       act(() => {
         result.current.updateEPGProgress({
-          source: "source1",
-          action: "downloading",
+          source: 'source1',
+          action: 'downloading',
           progress: 25,
         });
       });
@@ -676,13 +676,13 @@ describe("useEPGsStore", () => {
       expect(result.current.refreshProgress.source1.progress).toBe(25);
     });
 
-    it("should update EPG if status changed", () => {
+    it('should update EPG if status changed', () => {
       const { result } = renderHook(() => useEPGsStore());
 
       act(() => {
         useEPGsStore.setState({
           epgs: {
-            source1: { id: "source1", status: "idle", last_message: "" },
+            source1: { id: 'source1', status: 'idle', last_message: '' },
           },
         });
       });
@@ -691,27 +691,27 @@ describe("useEPGsStore", () => {
 
       act(() => {
         result.current.updateEPGProgress({
-          source: "source1",
-          action: "downloading",
+          source: 'source1',
+          action: 'downloading',
           progress: 25,
         });
       });
 
       // EPGs object should be different (updated) because status changed from 'idle' to 'fetching'
       expect(result.current.epgs).not.toBe(epgsBeforeUpdate);
-      expect(result.current.epgs.source1.status).toBe("fetching");
+      expect(result.current.epgs.source1.status).toBe('fetching');
     });
 
-    it("should preserve current EPG status when no status change is detected", () => {
+    it('should preserve current EPG status when no status change is detected', () => {
       const { result } = renderHook(() => useEPGsStore());
 
       act(() => {
         useEPGsStore.setState({
           epgs: {
             source1: {
-              id: "source1",
-              status: "parsing",
-              last_message: "Processing",
+              id: 'source1',
+              status: 'parsing',
+              last_message: 'Processing',
             },
           },
         });
@@ -719,14 +719,14 @@ describe("useEPGsStore", () => {
 
       act(() => {
         result.current.updateEPGProgress({
-          source: "source1",
-          action: "parsing_programs",
+          source: 'source1',
+          action: 'parsing_programs',
           progress: 85,
         });
       });
 
-      expect(result.current.epgs.source1.status).toBe("parsing");
-      expect(result.current.epgs.source1.last_message).toBe("Processing");
+      expect(result.current.epgs.source1.status).toBe('parsing');
+      expect(result.current.epgs.source1.last_message).toBe('Processing');
     });
   });
 });

@@ -1,4 +1,5 @@
-import { useState, useEffect, useMemo } from 'react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -6,23 +7,22 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '~/components/ui/dialog';
-import { Button } from '~/components/ui/button';
-import { Label } from '~/components/ui/label';
-import API from '~/lib/api';
-import toast from '~/lib/toast';
+} from '@/components/ui/dialog';
 import {
   Field,
   FieldContent,
   FieldDescription,
   FieldLabel,
-} from '~/components/ui/field';
-import { RadioGroup, RadioGroupItem } from '~/components/ui/radio-group';
-import Input from '~/components/dispatcharr/Input';
-import { Badge } from '~/components/ui/badge';
+} from '@/components/ui/field';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import API from '@/lib/api';
+import { getChangedSettings, saveChangedSettings } from '@/lib/settings-utils';
+import toast from '@/lib/toast';
+import useSettingsStore from '@/store/settings';
 import { X } from 'lucide-react';
-import useSettingsStore from '~/store/settings';
-import { getChangedSettings, saveChangedSettings } from '~/lib/settings-utils';
+import { useEffect, useMemo, useState } from 'react';
 
 interface AssignChannelNumbersFormProps {
   channelIds: number[];

@@ -1,5 +1,5 @@
-import { create } from "zustand";
-import api from "~/lib/api";
+import { create } from 'zustand';
+import api from '@/lib/api';
 
 const useStreamsStore = create((set) => ({
   streams: [],
@@ -17,8 +17,8 @@ const useStreamsStore = create((set) => ({
         isLoading: false,
       });
     } catch (error) {
-      console.error("Failed to fetch streams:", error);
-      set({ error: "Failed to load streams.", isLoading: false });
+      console.error('Failed to fetch streams:', error);
+      set({ error: 'Failed to load streams.', isLoading: false });
     }
   },
 

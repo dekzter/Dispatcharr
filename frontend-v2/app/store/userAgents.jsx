@@ -1,5 +1,5 @@
-import { create } from "zustand";
-import api from "~/lib/api";
+import { create } from 'zustand';
+import api from '@/lib/api';
 
 const useUserAgentsStore = create((set) => ({
   userAgents: [],
@@ -12,8 +12,8 @@ const useUserAgentsStore = create((set) => ({
       const userAgents = await api.getUserAgents();
       set({ userAgents: userAgents, isLoading: false });
     } catch (error) {
-      console.error("Failed to fetch userAgents:", error);
-      set({ error: "Failed to load userAgents.", isLoading: false });
+      console.error('Failed to fetch userAgents:', error);
+      set({ error: 'Failed to load userAgents.', isLoading: false });
     }
   },
 
@@ -25,14 +25,14 @@ const useUserAgentsStore = create((set) => ({
   updateUserAgent: (userAgent) =>
     set((state) => ({
       userAgents: state.userAgents.map((ua) =>
-        ua.id === userAgent.id ? userAgent : ua,
+        ua.id === userAgent.id ? userAgent : ua
       ),
     })),
 
   removeUserAgents: (userAgentIds) =>
     set((state) => ({
       userAgents: state.userAgents.filter(
-        (userAgent) => !userAgentIds.includes(userAgent.id),
+        (userAgent) => !userAgentIds.includes(userAgent.id)
       ),
     })),
 }));

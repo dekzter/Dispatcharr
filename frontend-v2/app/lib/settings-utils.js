@@ -1,4 +1,4 @@
-import API from '~/lib/api.js';
+import API from '@/lib/api.js';
 
 export const checkSetting = async (values) => {
   return await API.checkSetting(values);

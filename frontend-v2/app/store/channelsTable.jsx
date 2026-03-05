@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import storage from '~/lib/safe-storage';
+import storage from '@/lib/safe-storage';
 
 const useChannelsTableStore = create((set, get) => ({
   channels: [],

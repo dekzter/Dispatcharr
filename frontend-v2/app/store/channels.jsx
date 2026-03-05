@@ -1,6 +1,6 @@
 import { create } from 'zustand';
-import api from '~/lib/api';
-import toast from '~/lib/toast';
+import api from '@/lib/api';
+import toast from '@/lib/toast';
 
 const defaultProfiles = { 0: { id: '0', name: 'All', channels: new Set() } };
 

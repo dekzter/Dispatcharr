@@ -12,10 +12,6 @@ export default [
   // Protected routes (with sidebar)
   layout('components/app-layout.tsx', [
     index('routes/channels.tsx'),
-    // route("/sources", "routes/sources.tsx"),
-    // route("/users", "routes/users.tsx"),
-    // route("/documents", "routes/documents.tsx"),
-    route('/settings', 'routes/settings.tsx'),
-    // route("/about", "routes/about.tsx"),
+    route('/stats', 'routes/stats.tsx'),
   ]),
 ] satisfies RouteConfig;

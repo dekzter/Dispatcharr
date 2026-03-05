@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import storage from '~/lib/safe-storage';
+import storage from '@/lib/safe-storage';
 import useSettingsStore from './settings';
 import useChannelsStore from './channels';
 import usePlaylistsStore from './playlists';

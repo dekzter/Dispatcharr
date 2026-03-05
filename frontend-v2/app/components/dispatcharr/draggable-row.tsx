@@ -1,8 +1,7 @@
-import React from 'react';
+import useChannelsTableStore from '@/store/channelsTable';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical } from 'lucide-react';
-import useChannelsTableStore from '~/store/channelsTable';
 
 export const DraggableRowWrapper = ({
   row,

@@ -1,13 +1,13 @@
-import { create } from "zustand";
-import api from "~/lib/api";
+import { create } from 'zustand';
+import api from '@/lib/api';
 
 const determineEPGStatus = (data, currentEpg) => {
   if (data.status) return data.status;
-  if (data.action === "downloading") return "fetching";
-  if (data.action === "parsing_channels" || data.action === "parsing_programs")
-    return "parsing";
-  if (data.progress === 100) return "success";
-  return currentEpg?.status || "idle";
+  if (data.action === 'downloading') return 'fetching';
+  if (data.action === 'parsing_channels' || data.action === 'parsing_programs')
+    return 'parsing';
+  if (data.progress === 100) return 'success';
+  return currentEpg?.status || 'idle';
 };
 
 const useEPGsStore = create((set) => ({
@@ -31,8 +31,8 @@ const useEPGsStore = create((set) => ({
         isLoading: false,
       });
     } catch (error) {
-      console.error("Failed to fetch epgs:", error);
-      set({ error: "Failed to load epgs.", isLoading: false });
+      console.error('Failed to fetch epgs:', error);
+      set({ error: 'Failed to load epgs.', isLoading: false });
     }
   },
 
@@ -50,9 +50,9 @@ const useEPGsStore = create((set) => ({
         isLoading: false,
       });
     } catch (error) {
-      console.error("Failed to fetch tvgs:", error);
+      console.error('Failed to fetch tvgs:', error);
       set({
-        error: "Failed to load tvgs.",
+        error: 'Failed to load tvgs.',
         tvgsLoaded: true,
         isLoading: false,
       });
@@ -67,8 +67,8 @@ const useEPGsStore = create((set) => ({
   updateEPG: (epg) =>
     set((state) => {
       // Validate that epg is an object with an id
-      if (!epg || typeof epg !== "object" || !epg.id) {
-        console.error("updateEPG called with invalid epg:", epg);
+      if (!epg || typeof epg !== 'object' || !epg.id) {
+        console.error('updateEPG called with invalid epg:', epg);
         return state;
       }
 
@@ -90,8 +90,8 @@ const useEPGsStore = create((set) => ({
   updateEPGProgress: (data) =>
     set((state) => {
       // Validate that data is an object with a source
-      if (!data || typeof data !== "object" || !data.source) {
-        console.error("updateEPGProgress called with invalid data:", data);
+      if (!data || typeof data !== 'object' || !data.source) {
+        console.error('updateEPGProgress called with invalid data:', data);
         return state;
       }
 
@@ -109,7 +109,7 @@ const useEPGsStore = create((set) => ({
           speed: data.speed,
           elapsed_time: data.elapsed_time,
           time_remaining: data.time_remaining,
-          status: data.status || "in_progress",
+          status: data.status || 'in_progress',
         },
       };
 
@@ -120,8 +120,8 @@ const useEPGsStore = create((set) => ({
       // Only update epgs object if status or last_message actually changed
       // This prevents unnecessary re-renders on every progress update
       const lastMessage =
-        data.status === "error"
-          ? data.error || "Unknown error"
+        data.status === 'error'
+          ? data.error || 'Unknown error'
           : state.epgs[data.source]?.last_message;
 
       const currentEpg = state.epgs[data.source];

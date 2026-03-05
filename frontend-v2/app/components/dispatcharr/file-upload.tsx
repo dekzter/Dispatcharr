@@ -1,50 +1,52 @@
-import * as React from "react"
-import { Upload, FileImage, X, File, CheckCircle2 } from "lucide-react"
-import { cn } from "~/lib/utils"
+import { cn } from '@/lib/utils';
+import { CheckCircle2, File, FileImage, Upload, X } from 'lucide-react';
+import * as React from 'react';
 
-export interface FileUploadProps
-  extends Omit<React.HTMLAttributes<HTMLDivElement>, "onDrop"> {
+export interface FileUploadProps extends Omit<
+  React.HTMLAttributes<HTMLDivElement>,
+  'onDrop'
+> {
   /**
    * Callback when files are selected or dropped
    */
-  onFilesSelected?: (files: File[]) => void
-  onFilesCleared?: () => void
+  onFilesSelected?: (files: File[]) => void;
+  onFilesCleared?: () => void;
   /**
    * Maximum file size in bytes
    */
-  maxSize?: number
+  maxSize?: number;
   /**
    * Maximum number of files
    */
-  maxFiles?: number
+  maxFiles?: number;
   /**
    * Accept specific file types (e.g., { 'image/*': ['.png', '.jpg'] })
    */
-  accept?: Record<string, string[]>
+  accept?: Record<string, string[]>;
   /**
    * Whether multiple files can be selected
    */
-  multiple?: boolean
+  multiple?: boolean;
   /**
    * Whether the component is disabled
    */
-  disabled?: boolean
+  disabled?: boolean;
   /**
    * Custom content to display in the upload area
    */
-  children?: React.ReactNode
+  children?: React.ReactNode;
   /**
    * Show preview of selected files
    */
-  showPreview?: boolean
+  showPreview?: boolean;
   /**
    * Loading state
    */
-  loading?: boolean
+  loading?: boolean;
   /**
    * Error message to display
    */
-  error?: string
+  error?: string;
 }
 
 const FileUpload = React.forwardRef<HTMLDivElement, FileUploadProps>(
@@ -66,21 +68,21 @@ const FileUpload = React.forwardRef<HTMLDivElement, FileUploadProps>(
     },
     ref
   ) => {
-    const [isDragging, setIsDragging] = React.useState(false)
-    const [selectedFiles, setSelectedFiles] = React.useState<File[]>([])
+    const [isDragging, setIsDragging] = React.useState(false);
+    const [selectedFiles, setSelectedFiles] = React.useState<File[]>([]);
     const [validationError, setValidationError] = React.useState<string | null>(
       null
-    )
-    const inputRef = React.useRef<HTMLInputElement>(null)
-    const dragCounterRef = React.useRef(0)
+    );
+    const inputRef = React.useRef<HTMLInputElement>(null);
+    const dragCounterRef = React.useRef(0);
 
     // Convert accept object to HTML input accept string
     const acceptString = React.useMemo(() => {
-      if (!accept) return undefined
+      if (!accept) return undefined;
       return Object.entries(accept)
         .flatMap(([mime, exts]) => [mime, ...exts])
-        .join(",")
-    }, [accept])
+        .join(',');
+    }, [accept]);
 
     const validateFiles = React.useCallback(
       (files: File[]): { valid: File[]; error: string | null } => {
@@ -88,174 +90,174 @@ const FileUpload = React.forwardRef<HTMLDivElement, FileUploadProps>(
         if (files.length > maxFiles) {
           return {
             valid: [],
-            error: `Maximum ${maxFiles} file${maxFiles > 1 ? "s" : ""} allowed`,
-          }
+            error: `Maximum ${maxFiles} file${maxFiles > 1 ? 's' : ''} allowed`,
+          };
         }
 
         // Check file size
         if (maxSize) {
-          const oversizedFiles = files.filter((file) => file.size > maxSize)
+          const oversizedFiles = files.filter((file) => file.size > maxSize);
           if (oversizedFiles.length > 0) {
-            const maxSizeMB = (maxSize / (1024 * 1024)).toFixed(2)
+            const maxSizeMB = (maxSize / (1024 * 1024)).toFixed(2);
             return {
               valid: [],
               error: `File size exceeds ${maxSizeMB}MB limit`,
-            }
+            };
           }
         }
 
         // Check file types
         if (accept) {
-          const validExtensions = Object.values(accept).flat()
-          const validMimeTypes = Object.keys(accept)
+          const validExtensions = Object.values(accept).flat();
+          const validMimeTypes = Object.keys(accept);
 
           const invalidFiles = files.filter((file) => {
-            const fileExtension = `.${file.name.split(".").pop()?.toLowerCase()}`
-            const fileMimeType = file.type
+            const fileExtension = `.${file.name.split('.').pop()?.toLowerCase()}`;
+            const fileMimeType = file.type;
 
             const extensionMatch = validExtensions.some(
               (ext) => ext.toLowerCase() === fileExtension
-            )
+            );
             const mimeMatch = validMimeTypes.some((mime) => {
-              if (mime.endsWith("/*")) {
-                const mimePrefix = mime.split("/")[0]
-                return fileMimeType.startsWith(mimePrefix + "/")
+              if (mime.endsWith('/*')) {
+                const mimePrefix = mime.split('/')[0];
+                return fileMimeType.startsWith(mimePrefix + '/');
               }
-              return fileMimeType === mime
-            })
+              return fileMimeType === mime;
+            });
 
-            return !extensionMatch && !mimeMatch
-          })
+            return !extensionMatch && !mimeMatch;
+          });
 
           if (invalidFiles.length > 0) {
             return {
               valid: [],
-              error: "Invalid file type",
-            }
+              error: 'Invalid file type',
+            };
           }
         }
 
-        return { valid: files, error: null }
+        return { valid: files, error: null };
       },
       [maxSize, maxFiles, accept]
-    )
+    );
 
     const handleFiles = React.useCallback(
       (files: FileList | null) => {
-        if (!files || files.length === 0) return
+        if (!files || files.length === 0) return;
 
-        const fileArray = Array.from(files)
-        const { valid, error } = validateFiles(fileArray)
+        const fileArray = Array.from(files);
+        const { valid, error } = validateFiles(fileArray);
 
         if (error) {
-          setValidationError(error)
-          setSelectedFiles([])
-          return
+          setValidationError(error);
+          setSelectedFiles([]);
+          return;
         }
 
-        setValidationError(null)
-        setSelectedFiles(valid)
-        onFilesSelected?.(valid)
+        setValidationError(null);
+        setSelectedFiles(valid);
+        onFilesSelected?.(valid);
       },
       [validateFiles, onFilesSelected]
-    )
+    );
 
     const handleDragEnter = React.useCallback(
       (e: React.DragEvent<HTMLDivElement>) => {
-        e.preventDefault()
-        e.stopPropagation()
+        e.preventDefault();
+        e.stopPropagation();
 
-        if (disabled || loading) return
+        if (disabled || loading) return;
 
-        dragCounterRef.current++
+        dragCounterRef.current++;
         if (e.dataTransfer.items && e.dataTransfer.items.length > 0) {
-          setIsDragging(true)
+          setIsDragging(true);
         }
       },
       [disabled, loading]
-    )
+    );
 
     const handleDragLeave = React.useCallback(
       (e: React.DragEvent<HTMLDivElement>) => {
-        e.preventDefault()
-        e.stopPropagation()
+        e.preventDefault();
+        e.stopPropagation();
 
-        if (disabled || loading) return
+        if (disabled || loading) return;
 
-        dragCounterRef.current--
+        dragCounterRef.current--;
         if (dragCounterRef.current === 0) {
-          setIsDragging(false)
+          setIsDragging(false);
         }
       },
       [disabled, loading]
-    )
+    );
 
     const handleDragOver = React.useCallback(
       (e: React.DragEvent<HTMLDivElement>) => {
-        e.preventDefault()
-        e.stopPropagation()
+        e.preventDefault();
+        e.stopPropagation();
 
-        if (disabled || loading) return
+        if (disabled || loading) return;
 
         if (e.dataTransfer) {
-          e.dataTransfer.dropEffect = "copy"
+          e.dataTransfer.dropEffect = 'copy';
         }
       },
       [disabled, loading]
-    )
+    );
 
     const handleDrop = React.useCallback(
       (e: React.DragEvent<HTMLDivElement>) => {
-        e.preventDefault()
-        e.stopPropagation()
+        e.preventDefault();
+        e.stopPropagation();
 
-        if (disabled || loading) return
+        if (disabled || loading) return;
 
-        setIsDragging(false)
-        dragCounterRef.current = 0
+        setIsDragging(false);
+        dragCounterRef.current = 0;
 
-        const files = e.dataTransfer.files
-        handleFiles(files)
+        const files = e.dataTransfer.files;
+        handleFiles(files);
       },
       [disabled, loading, handleFiles]
-    )
+    );
 
     const handleClick = React.useCallback(() => {
-      if (disabled || loading) return
-      inputRef.current?.click()
-    }, [disabled, loading])
+      if (disabled || loading) return;
+      inputRef.current?.click();
+    }, [disabled, loading]);
 
     const handleInputChange = React.useCallback(
       (e: React.ChangeEvent<HTMLInputElement>) => {
-        handleFiles(e.target.files)
+        handleFiles(e.target.files);
         // Reset input value to allow selecting the same file again
-        e.target.value = ""
+        e.target.value = '';
       },
       [handleFiles]
-    )
+    );
 
     const clearFiles = React.useCallback(() => {
-      setSelectedFiles([])
-      setValidationError(null)
+      setSelectedFiles([]);
+      setValidationError(null);
       if (inputRef.current) {
-        inputRef.current.value = ""
+        inputRef.current.value = '';
       }
-      onFilesCleared?.()
-    }, [onFilesCleared])
+      onFilesCleared?.();
+    }, [onFilesCleared]);
 
-    const displayError = error || validationError
+    const displayError = error || validationError;
 
     return (
       <div ref={ref} className="w-full space-y-2" {...props}>
         <div
           className={cn(
-            "relative flex min-h-[120px] cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-input bg-background p-6 transition-all",
-            "hover:border-primary/50 hover:bg-accent/50",
+            'relative flex min-h-[120px] cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-input bg-background p-6 transition-all',
+            'hover:border-primary/50 hover:bg-accent/50',
             isDragging &&
-              "border-primary bg-primary/5 dark:bg-primary/10 scale-[1.01]",
-            disabled && "cursor-not-allowed opacity-50",
-            loading && "cursor-wait opacity-70",
-            displayError && "border-destructive bg-destructive/5",
+              'border-primary bg-primary/5 dark:bg-primary/10 scale-[1.01]',
+            disabled && 'cursor-not-allowed opacity-50',
+            loading && 'cursor-wait opacity-70',
+            displayError && 'border-destructive bg-destructive/5',
             className
           )}
           onDragEnter={handleDragEnter}
@@ -266,9 +268,9 @@ const FileUpload = React.forwardRef<HTMLDivElement, FileUploadProps>(
           role="button"
           tabIndex={disabled || loading ? -1 : 0}
           onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault()
-              handleClick()
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              handleClick();
             }
           }}
           aria-label="File upload area"
@@ -303,10 +305,10 @@ const FileUpload = React.forwardRef<HTMLDivElement, FileUploadProps>(
                 </>
               ) : selectedFiles.length > 0 ? (
                 <>
-                  <CheckCircle2 className="h-12 w-12 text-green-500" />
+                  <CheckCircle2 className="h-12 w-12 text-[var(--success)]" />
                   <p className="text-sm font-medium">
                     {selectedFiles.length} file
-                    {selectedFiles.length > 1 ? "s" : ""} selected
+                    {selectedFiles.length > 1 ? 's' : ''} selected
                   </p>
                 </>
               ) : (
@@ -317,16 +319,13 @@ const FileUpload = React.forwardRef<HTMLDivElement, FileUploadProps>(
                       Click to upload
                     </span>
                     <span className="text-muted-foreground">
-                      {" "}
+                      {' '}
                       or drag and drop
                     </span>
                   </div>
                   {accept && (
                     <p className="text-xs text-muted-foreground">
-                      {Object.values(accept)
-                        .flat()
-                        .join(", ")
-                        .toUpperCase()}{" "}
+                      {Object.values(accept).flat().join(', ').toUpperCase()}{' '}
                       files
                     </p>
                   )}
@@ -356,7 +355,7 @@ const FileUpload = React.forwardRef<HTMLDivElement, FileUploadProps>(
                 className="flex items-center justify-between rounded-md border border-input bg-background p-3"
               >
                 <div className="flex items-center gap-3 overflow-hidden">
-                  {file.type.startsWith("image/") ? (
+                  {file.type.startsWith('image/') ? (
                     <FileImage className="h-5 w-5 shrink-0 text-muted-foreground" />
                   ) : (
                     <File className="h-5 w-5 shrink-0 text-muted-foreground" />
@@ -369,7 +368,7 @@ const FileUpload = React.forwardRef<HTMLDivElement, FileUploadProps>(
                   </div>
                 </div>
 
-<img
+                <img
                   src={URL.createObjectURL(file)}
                   alt="Logo preview"
                   width={100}
@@ -396,8 +395,8 @@ const FileUpload = React.forwardRef<HTMLDivElement, FileUploadProps>(
                 <button
                   type="button"
                   onClick={(e) => {
-                    e.stopPropagation()
-                    clearFiles()
+                    e.stopPropagation();
+                    clearFiles();
                   }}
                   className="shrink-0 rounded-md p-1 hover:bg-destructive/10 text-destructive"
                   aria-label="Remove file"
@@ -409,10 +408,10 @@ const FileUpload = React.forwardRef<HTMLDivElement, FileUploadProps>(
           </div>
         )}
       </div>
-    )
+    );
   }
-)
+);
 
-FileUpload.displayName = "FileUpload"
+FileUpload.displayName = 'FileUpload';
 
-export { FileUpload }
+export { FileUpload };

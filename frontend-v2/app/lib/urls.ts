@@ -14,7 +14,7 @@ function getBaseUrlFromRequest(request: Request): string {
 
   if (!import.meta.env.PROD) {
     // Development: Use backend port
-    return `${protocol}//${url.hostname}:5656`;
+    return `${protocol}//${url.hostname}:9191`;
   }
 
   // Production: Use request host
@@ -33,6 +33,7 @@ function getBaseUrlFromWindow(): string {
   if (!import.meta.env.PROD) {
     // Development: Use backend port
     return `${protocol}//${hostname}:5656`;
+    // return `${protocol}//${hostname}`; // @TODO-v2 ngrok port
   }
 
   // Production: Use current host

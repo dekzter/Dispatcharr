@@ -1,11 +1,11 @@
-import { renderHook, act } from "@testing-library/react";
-import { describe, it, expect, beforeEach, vi } from "vitest";
-import useVODLogosStore from "../vodLogos";
-import api from "../~/lib/api";
+import { renderHook, act } from '@testing-library/react';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import useVODLogosStore from '../vodLogos';
+import api from '../@/lib/api';
 
-vi.mock("../~/lib/api");
+vi.mock('../@/lib/api');
 
-describe("useVODLogosStore", () => {
+describe('useVODLogosStore', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     useVODLogosStore.setState({
@@ -20,7 +20,7 @@ describe("useVODLogosStore", () => {
     });
   });
 
-  it("should initialize with default state", () => {
+  it('should initialize with default state', () => {
     const { result } = renderHook(() => useVODLogosStore());
 
     expect(result.current.vodLogos).toEqual({});
@@ -33,11 +33,11 @@ describe("useVODLogosStore", () => {
     expect(result.current.pageSize).toBe(25);
   });
 
-  it("should set VOD logos with normalized structure", () => {
+  it('should set VOD logos with normalized structure', () => {
     const { result } = renderHook(() => useVODLogosStore());
     const mockLogos = [
-      { id: 1, name: "Logo 1", url: "http://example.com/logo1.png" },
-      { id: 2, name: "Logo 2", url: "http://example.com/logo2.png" },
+      { id: 1, name: 'Logo 1', url: 'http://example.com/logo1.png' },
+      { id: 2, name: 'Logo 2', url: 'http://example.com/logo2.png' },
     ];
 
     act(() => {
@@ -45,17 +45,17 @@ describe("useVODLogosStore", () => {
     });
 
     expect(result.current.vodLogos).toEqual({
-      1: { id: 1, name: "Logo 1", url: "http://example.com/logo1.png" },
-      2: { id: 2, name: "Logo 2", url: "http://example.com/logo2.png" },
+      1: { id: 1, name: 'Logo 1', url: 'http://example.com/logo1.png' },
+      2: { id: 2, name: 'Logo 2', url: 'http://example.com/logo2.png' },
     });
     expect(result.current.totalCount).toBe(2);
     expect(result.current.hasLoaded).toBe(true);
   });
 
-  it("should fetch VOD logos successfully with array response", async () => {
+  it('should fetch VOD logos successfully with array response', async () => {
     const mockLogos = [
-      { id: 1, name: "Logo 1", url: "http://example.com/logo1.png" },
-      { id: 2, name: "Logo 2", url: "http://example.com/logo2.png" },
+      { id: 1, name: 'Logo 1', url: 'http://example.com/logo1.png' },
+      { id: 2, name: 'Logo 2', url: 'http://example.com/logo2.png' },
     ];
 
     api.getVODLogos.mockResolvedValue(mockLogos);
@@ -68,8 +68,8 @@ describe("useVODLogosStore", () => {
 
     expect(api.getVODLogos).toHaveBeenCalled();
     expect(result.current.vodLogos).toEqual({
-      1: { id: 1, name: "Logo 1", url: "http://example.com/logo1.png" },
-      2: { id: 2, name: "Logo 2", url: "http://example.com/logo2.png" },
+      1: { id: 1, name: 'Logo 1', url: 'http://example.com/logo1.png' },
+      2: { id: 2, name: 'Logo 2', url: 'http://example.com/logo2.png' },
     });
     expect(result.current.logos).toEqual(mockLogos);
     expect(result.current.totalCount).toBe(2);
@@ -77,9 +77,9 @@ describe("useVODLogosStore", () => {
     expect(result.current.hasLoaded).toBe(true);
   });
 
-  it("should fetch VOD logos successfully with paginated response", async () => {
+  it('should fetch VOD logos successfully with paginated response', async () => {
     const mockLogos = [
-      { id: 1, name: "Logo 1", url: "http://example.com/logo1.png" },
+      { id: 1, name: 'Logo 1', url: 'http://example.com/logo1.png' },
     ];
     const mockResponse = {
       results: mockLogos,
@@ -95,18 +95,18 @@ describe("useVODLogosStore", () => {
     });
 
     expect(result.current.vodLogos).toEqual({
-      1: { id: 1, name: "Logo 1", url: "http://example.com/logo1.png" },
+      1: { id: 1, name: 'Logo 1', url: 'http://example.com/logo1.png' },
     });
     expect(result.current.logos).toEqual(mockLogos);
     expect(result.current.totalCount).toBe(10);
   });
 
-  it("should handle fetch VOD logos error", async () => {
-    const mockError = new Error("Network error");
+  it('should handle fetch VOD logos error', async () => {
+    const mockError = new Error('Network error');
     api.getVODLogos.mockRejectedValue(mockError);
 
     const consoleErrorSpy = vi
-      .spyOn(console, "error")
+      .spyOn(console, 'error')
       .mockImplementation(() => {});
 
     const { result } = renderHook(() => useVODLogosStore());
@@ -119,17 +119,17 @@ describe("useVODLogosStore", () => {
       }
     });
 
-    expect(result.current.error).toBe("Failed to load VOD logos.");
+    expect(result.current.error).toBe('Failed to load VOD logos.');
     expect(result.current.isLoading).toBe(false);
     expect(consoleErrorSpy).toHaveBeenCalledWith(
-      "Failed to fetch VOD logos:",
-      mockError,
+      'Failed to fetch VOD logos:',
+      mockError
     );
 
     consoleErrorSpy.mockRestore();
   });
 
-  it("should set loading state during fetch", async () => {
+  it('should set loading state during fetch', async () => {
     let resolvePromise;
     const promise = new Promise((resolve) => {
       resolvePromise = resolve;
@@ -154,17 +154,17 @@ describe("useVODLogosStore", () => {
     expect(result.current.isLoading).toBe(false);
   });
 
-  it("should remove single VOD logo from state", () => {
+  it('should remove single VOD logo from state', () => {
     useVODLogosStore.setState({
       vodLogos: {
-        1: { id: 1, name: "Logo 1" },
-        2: { id: 2, name: "Logo 2" },
-        3: { id: 3, name: "Logo 3" },
+        1: { id: 1, name: 'Logo 1' },
+        2: { id: 2, name: 'Logo 2' },
+        3: { id: 3, name: 'Logo 3' },
       },
       logos: [
-        { id: 1, name: "Logo 1" },
-        { id: 2, name: "Logo 2" },
-        { id: 3, name: "Logo 3" },
+        { id: 1, name: 'Logo 1' },
+        { id: 2, name: 'Logo 2' },
+        { id: 3, name: 'Logo 3' },
       ],
       totalCount: 3,
     });
@@ -176,27 +176,27 @@ describe("useVODLogosStore", () => {
     });
 
     expect(result.current.vodLogos).toEqual({
-      1: { id: 1, name: "Logo 1" },
-      3: { id: 3, name: "Logo 3" },
+      1: { id: 1, name: 'Logo 1' },
+      3: { id: 3, name: 'Logo 3' },
     });
     expect(result.current.logos).toEqual([
-      { id: 1, name: "Logo 1" },
-      { id: 3, name: "Logo 3" },
+      { id: 1, name: 'Logo 1' },
+      { id: 3, name: 'Logo 3' },
     ]);
     expect(result.current.totalCount).toBe(2);
   });
 
-  it("should remove multiple VOD logos from state using _removeLogosFromState", () => {
+  it('should remove multiple VOD logos from state using _removeLogosFromState', () => {
     useVODLogosStore.setState({
       vodLogos: {
-        1: { id: 1, name: "Logo 1" },
-        2: { id: 2, name: "Logo 2" },
-        3: { id: 3, name: "Logo 3" },
+        1: { id: 1, name: 'Logo 1' },
+        2: { id: 2, name: 'Logo 2' },
+        3: { id: 3, name: 'Logo 3' },
       },
       logos: [
-        { id: 1, name: "Logo 1" },
-        { id: 2, name: "Logo 2" },
-        { id: 3, name: "Logo 3" },
+        { id: 1, name: 'Logo 1' },
+        { id: 2, name: 'Logo 2' },
+        { id: 3, name: 'Logo 3' },
       ],
       totalCount: 3,
     });
@@ -208,21 +208,21 @@ describe("useVODLogosStore", () => {
     });
 
     expect(result.current.vodLogos).toEqual({
-      2: { id: 2, name: "Logo 2" },
+      2: { id: 2, name: 'Logo 2' },
     });
-    expect(result.current.logos).toEqual([{ id: 2, name: "Logo 2" }]);
+    expect(result.current.logos).toEqual([{ id: 2, name: 'Logo 2' }]);
     expect(result.current.totalCount).toBe(1);
   });
 
-  it("should delete single VOD logo successfully", async () => {
+  it('should delete single VOD logo successfully', async () => {
     useVODLogosStore.setState({
       vodLogos: {
-        1: { id: 1, name: "Logo 1" },
-        2: { id: 2, name: "Logo 2" },
+        1: { id: 1, name: 'Logo 1' },
+        2: { id: 2, name: 'Logo 2' },
       },
       logos: [
-        { id: 1, name: "Logo 1" },
-        { id: 2, name: "Logo 2" },
+        { id: 1, name: 'Logo 1' },
+        { id: 2, name: 'Logo 2' },
       ],
       totalCount: 2,
     });
@@ -237,18 +237,18 @@ describe("useVODLogosStore", () => {
 
     expect(api.deleteVODLogo).toHaveBeenCalledWith(1);
     expect(result.current.vodLogos).toEqual({
-      2: { id: 2, name: "Logo 2" },
+      2: { id: 2, name: 'Logo 2' },
     });
-    expect(result.current.logos).toEqual([{ id: 2, name: "Logo 2" }]);
+    expect(result.current.logos).toEqual([{ id: 2, name: 'Logo 2' }]);
     expect(result.current.totalCount).toBe(1);
   });
 
-  it("should handle delete VOD logo error", async () => {
-    const mockError = new Error("Delete failed");
+  it('should handle delete VOD logo error', async () => {
+    const mockError = new Error('Delete failed');
     api.deleteVODLogo.mockRejectedValue(mockError);
 
     const consoleErrorSpy = vi
-      .spyOn(console, "error")
+      .spyOn(console, 'error')
       .mockImplementation(() => {});
 
     const { result } = renderHook(() => useVODLogosStore());
@@ -262,24 +262,24 @@ describe("useVODLogosStore", () => {
     });
 
     expect(consoleErrorSpy).toHaveBeenCalledWith(
-      "Failed to delete VOD logo:",
-      mockError,
+      'Failed to delete VOD logo:',
+      mockError
     );
 
     consoleErrorSpy.mockRestore();
   });
 
-  it("should delete multiple VOD logos successfully", async () => {
+  it('should delete multiple VOD logos successfully', async () => {
     useVODLogosStore.setState({
       vodLogos: {
-        1: { id: 1, name: "Logo 1" },
-        2: { id: 2, name: "Logo 2" },
-        3: { id: 3, name: "Logo 3" },
+        1: { id: 1, name: 'Logo 1' },
+        2: { id: 2, name: 'Logo 2' },
+        3: { id: 3, name: 'Logo 3' },
       },
       logos: [
-        { id: 1, name: "Logo 1" },
-        { id: 2, name: "Logo 2" },
-        { id: 3, name: "Logo 3" },
+        { id: 1, name: 'Logo 1' },
+        { id: 2, name: 'Logo 2' },
+        { id: 3, name: 'Logo 3' },
       ],
       totalCount: 3,
     });
@@ -294,18 +294,18 @@ describe("useVODLogosStore", () => {
 
     expect(api.deleteVODLogos).toHaveBeenCalledWith([1, 2]);
     expect(result.current.vodLogos).toEqual({
-      3: { id: 3, name: "Logo 3" },
+      3: { id: 3, name: 'Logo 3' },
     });
-    expect(result.current.logos).toEqual([{ id: 3, name: "Logo 3" }]);
+    expect(result.current.logos).toEqual([{ id: 3, name: 'Logo 3' }]);
     expect(result.current.totalCount).toBe(1);
   });
 
-  it("should handle delete multiple VOD logos error", async () => {
-    const mockError = new Error("Bulk delete failed");
+  it('should handle delete multiple VOD logos error', async () => {
+    const mockError = new Error('Bulk delete failed');
     api.deleteVODLogos.mockRejectedValue(mockError);
 
     const consoleErrorSpy = vi
-      .spyOn(console, "error")
+      .spyOn(console, 'error')
       .mockImplementation(() => {});
 
     const { result } = renderHook(() => useVODLogosStore());
@@ -319,21 +319,21 @@ describe("useVODLogosStore", () => {
     });
 
     expect(consoleErrorSpy).toHaveBeenCalledWith(
-      "Failed to delete VOD logos:",
-      mockError,
+      'Failed to delete VOD logos:',
+      mockError
     );
 
     consoleErrorSpy.mockRestore();
   });
 
-  it("should cleanup unused VOD logos and refresh", async () => {
+  it('should cleanup unused VOD logos and refresh', async () => {
     useVODLogosStore.setState({
       currentPage: 2,
       pageSize: 10,
     });
 
     const mockCleanupResult = { deleted: 5 };
-    const mockRefreshedLogos = [{ id: 1, name: "Logo 1" }];
+    const mockRefreshedLogos = [{ id: 1, name: 'Logo 1' }];
 
     api.cleanupUnusedVODLogos.mockResolvedValue(mockCleanupResult);
     api.getVODLogos.mockResolvedValue(mockRefreshedLogos);
@@ -353,12 +353,12 @@ describe("useVODLogosStore", () => {
     expect(result.current.logos).toEqual(mockRefreshedLogos);
   });
 
-  it("should handle cleanup unused VOD logos error", async () => {
-    const mockError = new Error("Cleanup failed");
+  it('should handle cleanup unused VOD logos error', async () => {
+    const mockError = new Error('Cleanup failed');
     api.cleanupUnusedVODLogos.mockRejectedValue(mockError);
 
     const consoleErrorSpy = vi
-      .spyOn(console, "error")
+      .spyOn(console, 'error')
       .mockImplementation(() => {});
 
     const { result } = renderHook(() => useVODLogosStore());
@@ -372,22 +372,22 @@ describe("useVODLogosStore", () => {
     });
 
     expect(consoleErrorSpy).toHaveBeenCalledWith(
-      "Failed to cleanup unused VOD logos:",
-      mockError,
+      'Failed to cleanup unused VOD logos:',
+      mockError
     );
 
     consoleErrorSpy.mockRestore();
   });
 
-  it("should clear VOD logos", () => {
+  it('should clear VOD logos', () => {
     useVODLogosStore.setState({
       vodLogos: {
-        1: { id: 1, name: "Logo 1" },
+        1: { id: 1, name: 'Logo 1' },
       },
-      logos: [{ id: 1, name: "Logo 1" }],
+      logos: [{ id: 1, name: 'Logo 1' }],
       hasLoaded: true,
       totalCount: 1,
-      error: "Some error",
+      error: 'Some error',
     });
 
     const { result } = renderHook(() => useVODLogosStore());
@@ -403,12 +403,12 @@ describe("useVODLogosStore", () => {
     expect(result.current.error).toBe(null);
   });
 
-  it("should handle removing non-existent logo", () => {
+  it('should handle removing non-existent logo', () => {
     useVODLogosStore.setState({
       vodLogos: {
-        1: { id: 1, name: "Logo 1" },
+        1: { id: 1, name: 'Logo 1' },
       },
-      logos: [{ id: 1, name: "Logo 1" }],
+      logos: [{ id: 1, name: 'Logo 1' }],
       totalCount: 1,
     });
 
@@ -419,13 +419,13 @@ describe("useVODLogosStore", () => {
     });
 
     expect(result.current.vodLogos).toEqual({
-      1: { id: 1, name: "Logo 1" },
+      1: { id: 1, name: 'Logo 1' },
     });
-    expect(result.current.logos).toEqual([{ id: 1, name: "Logo 1" }]);
+    expect(result.current.logos).toEqual([{ id: 1, name: 'Logo 1' }]);
     expect(result.current.totalCount).toBe(1);
   });
 
-  it("should handle fetch with empty response", async () => {
+  it('should handle fetch with empty response', async () => {
     api.getVODLogos.mockResolvedValue([]);
 
     const { result } = renderHook(() => useVODLogosStore());
@@ -439,12 +439,12 @@ describe("useVODLogosStore", () => {
     expect(result.current.totalCount).toBe(0);
   });
 
-  it("should not allow totalCount to go below zero", () => {
+  it('should not allow totalCount to go below zero', () => {
     useVODLogosStore.setState({
       vodLogos: {
-        1: { id: 1, name: "Logo 1" },
+        1: { id: 1, name: 'Logo 1' },
       },
-      logos: [{ id: 1, name: "Logo 1" }],
+      logos: [{ id: 1, name: 'Logo 1' }],
       totalCount: 1,
     });
 
@@ -457,12 +457,12 @@ describe("useVODLogosStore", () => {
     expect(result.current.totalCount).toBe(0);
   });
 
-  it("should handle _removeLogosFromState with empty array", () => {
+  it('should handle _removeLogosFromState with empty array', () => {
     const initialState = {
       vodLogos: {
-        1: { id: 1, name: "Logo 1" },
+        1: { id: 1, name: 'Logo 1' },
       },
-      logos: [{ id: 1, name: "Logo 1" }],
+      logos: [{ id: 1, name: 'Logo 1' }],
       totalCount: 1,
     };
 
@@ -479,22 +479,22 @@ describe("useVODLogosStore", () => {
     expect(result.current.totalCount).toBe(1);
   });
 
-  it("should fetch with custom params", async () => {
-    const mockLogos = [{ id: 1, name: "Logo 1" }];
+  it('should fetch with custom params', async () => {
+    const mockLogos = [{ id: 1, name: 'Logo 1' }];
     api.getVODLogos.mockResolvedValue(mockLogos);
 
     const { result } = renderHook(() => useVODLogosStore());
 
     await act(async () => {
-      await result.current.fetchVODLogos({ search: "test", page: 2 });
+      await result.current.fetchVODLogos({ search: 'test', page: 2 });
     });
 
-    expect(api.getVODLogos).toHaveBeenCalledWith({ search: "test", page: 2 });
+    expect(api.getVODLogos).toHaveBeenCalledWith({ search: 'test', page: 2 });
   });
 
-  it("should get unused logos count successfully", async () => {
+  it('should get unused logos count successfully', async () => {
     const mockResponse = {
-      results: [{ id: 1, name: "Unused Logo" }],
+      results: [{ id: 1, name: 'Unused Logo' }],
       count: 42,
     };
 
@@ -508,13 +508,13 @@ describe("useVODLogosStore", () => {
     });
 
     expect(api.getVODLogos).toHaveBeenCalledWith({
-      used: "false",
+      used: 'false',
       page_size: 1,
     });
     expect(unusedCount).toBe(42);
   });
 
-  it("should return 0 when unused logos count response has no count", async () => {
+  it('should return 0 when unused logos count response has no count', async () => {
     api.getVODLogos.mockResolvedValue({ results: [] });
 
     const { result } = renderHook(() => useVODLogosStore());
@@ -527,12 +527,12 @@ describe("useVODLogosStore", () => {
     expect(unusedCount).toBe(0);
   });
 
-  it("should handle get unused logos count error", async () => {
-    const mockError = new Error("Failed to fetch count");
+  it('should handle get unused logos count error', async () => {
+    const mockError = new Error('Failed to fetch count');
     api.getVODLogos.mockRejectedValue(mockError);
 
     const consoleErrorSpy = vi
-      .spyOn(console, "error")
+      .spyOn(console, 'error')
       .mockImplementation(() => {});
 
     const { result } = renderHook(() => useVODLogosStore());
@@ -546,14 +546,14 @@ describe("useVODLogosStore", () => {
     });
 
     expect(consoleErrorSpy).toHaveBeenCalledWith(
-      "Failed to fetch unused logos count:",
-      mockError,
+      'Failed to fetch unused logos count:',
+      mockError
     );
 
     consoleErrorSpy.mockRestore();
   });
 
-  it("should update currentPage and pageSize state", () => {
+  it('should update currentPage and pageSize state', () => {
     const { result } = renderHook(() => useVODLogosStore());
 
     act(() => {

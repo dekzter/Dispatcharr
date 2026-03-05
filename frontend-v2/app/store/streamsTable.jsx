@@ -1,14 +1,14 @@
-import { create } from "zustand";
-import storage from "~/lib/safe-storage";
+import { create } from 'zustand';
+import storage from '@/lib/safe-storage';
 
 const useStreamsTableStore = create((set) => ({
   streams: [],
   pageCount: 0,
   totalCount: 0,
-  sorting: [{ id: "name", desc: false }],
+  sorting: [{ id: 'name', desc: false }],
   pagination: {
     pageIndex: 0,
-    pageSize: storage.getJSON("streams-page-size") || 50,
+    pageSize: storage.getJSON('streams-page-size') || 50,
   },
   selectedStreamIds: [],
   allQueryIds: [],
@@ -18,7 +18,7 @@ const useStreamsTableStore = create((set) => ({
     set(() => ({
       streams: results,
       totalCount: count,
-      pageCount: Math.ceil(count / params.get("page_size")),
+      pageCount: Math.ceil(count / params.get('page_size')),
     }));
   },
 

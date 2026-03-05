@@ -1,23 +1,23 @@
-import { renderHook, act } from "@testing-library/react";
-import { describe, it, expect, beforeEach, vi } from "vitest";
-import useSettingsStore from "../settings";
-import api from "../~/lib/api";
+import { renderHook, act } from '@testing-library/react';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import useSettingsStore from '../settings';
+import api from '../@/lib/api';
 
-vi.mock("../~/lib/api");
+vi.mock('../@/lib/api');
 
-describe("useSettingsStore", () => {
+describe('useSettingsStore', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     useSettingsStore.setState({
       settings: {},
       environment: {
-        public_ip: "",
-        country_code: "",
-        country_name: "",
-        env_mode: "prod",
+        public_ip: '',
+        country_code: '',
+        country_name: '',
+        env_mode: 'prod',
       },
       version: {
-        version: "",
+        version: '',
         timestamp: null,
       },
       isLoading: false,
@@ -25,30 +25,30 @@ describe("useSettingsStore", () => {
     });
   });
 
-  it("should initialize with default state", () => {
+  it('should initialize with default state', () => {
     const { result } = renderHook(() => useSettingsStore());
 
     expect(result.current.settings).toEqual({});
     expect(result.current.environment).toEqual({
-      public_ip: "",
-      country_code: "",
-      country_name: "",
-      env_mode: "prod",
+      public_ip: '',
+      country_code: '',
+      country_name: '',
+      env_mode: 'prod',
     });
     expect(result.current.isLoading).toBe(false);
     expect(result.current.error).toBe(null);
   });
 
-  it("should fetch settings successfully", async () => {
+  it('should fetch settings successfully', async () => {
     const mockSettings = [
-      { key: "setting1", value: "value1" },
-      { key: "setting2", value: "value2" },
+      { key: 'setting1', value: 'value1' },
+      { key: 'setting2', value: 'value2' },
     ];
     const mockEnv = {
-      public_ip: "192.168.1.1",
-      country_code: "US",
-      country_name: "United States",
-      env_mode: "dev",
+      public_ip: '192.168.1.1',
+      country_code: 'US',
+      country_name: 'United States',
+      env_mode: 'dev',
     };
 
     api.getSettings.mockResolvedValue(mockSettings);
@@ -63,16 +63,16 @@ describe("useSettingsStore", () => {
     expect(api.getSettings).toHaveBeenCalled();
     expect(api.getEnvironmentSettings).toHaveBeenCalled();
     expect(result.current.settings).toEqual({
-      setting1: { key: "setting1", value: "value1" },
-      setting2: { key: "setting2", value: "value2" },
+      setting1: { key: 'setting1', value: 'value1' },
+      setting2: { key: 'setting2', value: 'value2' },
     });
     expect(result.current.environment).toEqual(mockEnv);
     expect(result.current.isLoading).toBe(false);
     expect(result.current.error).toBe(null);
   });
 
-  it("should handle null environment response", async () => {
-    const mockSettings = [{ key: "setting1", value: "value1" }];
+  it('should handle null environment response', async () => {
+    const mockSettings = [{ key: 'setting1', value: 'value1' }];
 
     api.getSettings.mockResolvedValue(mockSettings);
     api.getEnvironmentSettings.mockResolvedValue(null);
@@ -84,15 +84,15 @@ describe("useSettingsStore", () => {
     });
 
     expect(result.current.environment).toEqual({
-      public_ip: "",
-      country_code: "",
-      country_name: "",
-      env_mode: "prod",
+      public_ip: '',
+      country_code: '',
+      country_name: '',
+      env_mode: 'prod',
     });
   });
 
-  it("should handle fetch settings error", async () => {
-    const mockError = new Error("Network error");
+  it('should handle fetch settings error', async () => {
+    const mockError = new Error('Network error');
     api.getSettings.mockRejectedValue(mockError);
 
     const { result } = renderHook(() => useSettingsStore());
@@ -101,11 +101,11 @@ describe("useSettingsStore", () => {
       await result.current.fetchSettings();
     });
 
-    expect(result.current.error).toBe("Failed to load settings.");
+    expect(result.current.error).toBe('Failed to load settings.');
     expect(result.current.isLoading).toBe(false);
   });
 
-  it("should set loading state during fetch", async () => {
+  it('should set loading state during fetch', async () => {
     let resolveSettingsPromise;
     let resolveEnvPromise;
     const settingsPromise = new Promise((resolve) => {
@@ -137,66 +137,66 @@ describe("useSettingsStore", () => {
     expect(result.current.isLoading).toBe(false);
   });
 
-  it("should update setting", () => {
+  it('should update setting', () => {
     useSettingsStore.setState({
       settings: {
-        setting1: { key: "setting1", value: "old_value" },
-        setting2: { key: "setting2", value: "value2" },
+        setting1: { key: 'setting1', value: 'old_value' },
+        setting2: { key: 'setting2', value: 'value2' },
       },
     });
 
     const { result } = renderHook(() => useSettingsStore());
 
     act(() => {
-      result.current.updateSetting({ key: "setting1", value: "new_value" });
+      result.current.updateSetting({ key: 'setting1', value: 'new_value' });
     });
 
     expect(result.current.settings).toEqual({
-      setting1: { key: "setting1", value: "new_value" },
-      setting2: { key: "setting2", value: "value2" },
+      setting1: { key: 'setting1', value: 'new_value' },
+      setting2: { key: 'setting2', value: 'value2' },
     });
   });
 
-  it("should add new setting when updating non-existent key", () => {
+  it('should add new setting when updating non-existent key', () => {
     useSettingsStore.setState({
       settings: {
-        setting1: { key: "setting1", value: "value1" },
+        setting1: { key: 'setting1', value: 'value1' },
       },
     });
 
     const { result } = renderHook(() => useSettingsStore());
 
     act(() => {
-      result.current.updateSetting({ key: "setting2", value: "new_value" });
+      result.current.updateSetting({ key: 'setting2', value: 'new_value' });
     });
 
     expect(result.current.settings).toEqual({
-      setting1: { key: "setting1", value: "value1" },
-      setting2: { key: "setting2", value: "new_value" },
+      setting1: { key: 'setting1', value: 'value1' },
+      setting2: { key: 'setting2', value: 'new_value' },
     });
   });
 
-  it("should not modify other settings when updating", () => {
+  it('should not modify other settings when updating', () => {
     useSettingsStore.setState({
       settings: {
-        setting1: { key: "setting1", value: "value1" },
-        setting2: { key: "setting2", value: "value2" },
+        setting1: { key: 'setting1', value: 'value1' },
+        setting2: { key: 'setting2', value: 'value2' },
       },
     });
 
     const { result } = renderHook(() => useSettingsStore());
 
     act(() => {
-      result.current.updateSetting({ key: "setting1", value: "updated" });
+      result.current.updateSetting({ key: 'setting1', value: 'updated' });
     });
 
     expect(result.current.settings.setting2).toEqual({
-      key: "setting2",
-      value: "value2",
+      key: 'setting2',
+      value: 'value2',
     });
   });
 
-  it("should handle empty settings array", async () => {
+  it('should handle empty settings array', async () => {
     api.getSettings.mockResolvedValue([]);
     api.getEnvironmentSettings.mockResolvedValue({});
 
@@ -209,19 +209,19 @@ describe("useSettingsStore", () => {
     expect(result.current.settings).toEqual({});
   });
 
-  it("should initialize version with default state", () => {
+  it('should initialize version with default state', () => {
     const { result } = renderHook(() => useSettingsStore());
 
     expect(result.current.version).toEqual({
-      version: "",
+      version: '',
       timestamp: null,
     });
   });
 
-  it("should fetch version successfully", async () => {
+  it('should fetch version successfully', async () => {
     const mockVersion = {
-      version: "1.2.3",
-      timestamp: "2024-01-01T00:00:00Z",
+      version: '1.2.3',
+      timestamp: '2024-01-01T00:00:00Z',
     };
 
     api.getVersion.mockResolvedValue(mockVersion);
@@ -235,26 +235,26 @@ describe("useSettingsStore", () => {
 
     expect(api.getVersion).toHaveBeenCalled();
     expect(result.current.version).toEqual({
-      version: "1.2.3",
-      timestamp: "2024-01-01T00:00:00Z",
+      version: '1.2.3',
+      timestamp: '2024-01-01T00:00:00Z',
     });
     expect(versionResult).toEqual({
-      version: "1.2.3",
-      timestamp: "2024-01-01T00:00:00Z",
+      version: '1.2.3',
+      timestamp: '2024-01-01T00:00:00Z',
     });
   });
 
-  it("should skip fetching version if already loaded", async () => {
+  it('should skip fetching version if already loaded', async () => {
     useSettingsStore.setState({
       version: {
-        version: "1.0.0",
-        timestamp: "2023-01-01T00:00:00Z",
+        version: '1.0.0',
+        timestamp: '2023-01-01T00:00:00Z',
       },
     });
 
     api.getVersion.mockResolvedValue({
-      version: "2.0.0",
-      timestamp: "2024-01-01T00:00:00Z",
+      version: '2.0.0',
+      timestamp: '2024-01-01T00:00:00Z',
     });
 
     const { result } = renderHook(() => useSettingsStore());
@@ -266,16 +266,16 @@ describe("useSettingsStore", () => {
 
     expect(api.getVersion).not.toHaveBeenCalled();
     expect(result.current.version).toEqual({
-      version: "1.0.0",
-      timestamp: "2023-01-01T00:00:00Z",
+      version: '1.0.0',
+      timestamp: '2023-01-01T00:00:00Z',
     });
     expect(versionResult).toEqual({
-      version: "1.0.0",
-      timestamp: "2023-01-01T00:00:00Z",
+      version: '1.0.0',
+      timestamp: '2023-01-01T00:00:00Z',
     });
   });
 
-  it("should handle null version response", async () => {
+  it('should handle null version response', async () => {
     api.getVersion.mockResolvedValue(null);
 
     const { result } = renderHook(() => useSettingsStore());
@@ -285,13 +285,13 @@ describe("useSettingsStore", () => {
     });
 
     expect(result.current.version).toEqual({
-      version: "",
+      version: '',
       timestamp: null,
     });
   });
 
-  it("should handle fetch version error", async () => {
-    const mockError = new Error("Version fetch failed");
+  it('should handle fetch version error', async () => {
+    const mockError = new Error('Version fetch failed');
     api.getVersion.mockRejectedValue(mockError);
 
     const { result } = renderHook(() => useSettingsStore());
@@ -302,15 +302,15 @@ describe("useSettingsStore", () => {
     });
 
     expect(versionResult).toEqual({
-      version: "",
+      version: '',
       timestamp: null,
     });
   });
 
-  it("should fetch version with settings when version not loaded", async () => {
-    const mockSettings = [{ key: "setting1", value: "value1" }];
-    const mockEnv = { public_ip: "192.168.1.1" };
-    const mockVersion = { version: "1.0.0", timestamp: "2024-01-01T00:00:00Z" };
+  it('should fetch version with settings when version not loaded', async () => {
+    const mockSettings = [{ key: 'setting1', value: 'value1' }];
+    const mockEnv = { public_ip: '192.168.1.1' };
+    const mockVersion = { version: '1.0.0', timestamp: '2024-01-01T00:00:00Z' };
 
     api.getSettings.mockResolvedValue(mockSettings);
     api.getEnvironmentSettings.mockResolvedValue(mockEnv);
@@ -324,27 +324,27 @@ describe("useSettingsStore", () => {
 
     expect(api.getVersion).toHaveBeenCalled();
     expect(result.current.version).toEqual({
-      version: "1.0.0",
-      timestamp: "2024-01-01T00:00:00Z",
+      version: '1.0.0',
+      timestamp: '2024-01-01T00:00:00Z',
     });
   });
 
-  it("should skip fetching version with settings when already loaded", async () => {
+  it('should skip fetching version with settings when already loaded', async () => {
     useSettingsStore.setState({
       version: {
-        version: "1.0.0",
-        timestamp: "2023-01-01T00:00:00Z",
+        version: '1.0.0',
+        timestamp: '2023-01-01T00:00:00Z',
       },
     });
 
-    const mockSettings = [{ key: "setting1", value: "value1" }];
-    const mockEnv = { public_ip: "192.168.1.1" };
+    const mockSettings = [{ key: 'setting1', value: 'value1' }];
+    const mockEnv = { public_ip: '192.168.1.1' };
 
     api.getSettings.mockResolvedValue(mockSettings);
     api.getEnvironmentSettings.mockResolvedValue(mockEnv);
     api.getVersion.mockResolvedValue({
-      version: "2.0.0",
-      timestamp: "2024-01-01T00:00:00Z",
+      version: '2.0.0',
+      timestamp: '2024-01-01T00:00:00Z',
     });
 
     const { result } = renderHook(() => useSettingsStore());
@@ -355,8 +355,8 @@ describe("useSettingsStore", () => {
 
     expect(api.getVersion).not.toHaveBeenCalled();
     expect(result.current.version).toEqual({
-      version: "1.0.0",
-      timestamp: "2023-01-01T00:00:00Z",
+      version: '1.0.0',
+      timestamp: '2023-01-01T00:00:00Z',
     });
   });
 });

@@ -1,22 +1,22 @@
-import React, {
-  useState,
-  useEffect,
-  useRef,
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import API from '@/lib/api';
+import toast from '@/lib/toast';
+import useAuthStore from '@/store/auth';
+import useChannelsStore from '@/store/channels';
+import useEPGsStore from '@/store/epgs';
+import useLogosStore from '@/store/logos';
+import usePlaylistsStore from '@/store/playlists';
+import useSettingsStore from '@/store/settings';
+import {
   createContext,
-  useContext,
-  useMemo,
   useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
 } from 'react';
-import toast from '~/lib/toast';
-import useChannelsStore from '~/store/channels';
-import useLogosStore from '~/store/logos';
-import usePlaylistsStore from '~/store/playlists';
-import useEPGsStore from '~/store/epgs';
-import { Alert, AlertDescription, AlertTitle } from '~/components/ui/alert';
-import { Button } from '~/components/ui/button';
-import API from '~/lib/api';
-import useSettingsStore from '~/store/settings';
-import useAuthStore from '~/store/auth';
 
 export const WebsocketContext = createContext([false, () => {}, null]);
 
@@ -839,7 +839,7 @@ export const WebsocketProvider = ({ children }) => {
               if (notificationData) {
                 // Import and update the notifications store
                 const { default: useNotificationsStore } =
-                  await import('~/store/notifications');
+                  await import('@/store/notifications');
                 useNotificationsStore
                   .getState()
                   .addNotification(notificationData);
@@ -872,7 +872,7 @@ export const WebsocketProvider = ({ children }) => {
               const { notification_key } = parsedEvent.data;
               if (notification_key) {
                 const { default: useNotificationsStore } =
-                  await import('~/store/notifications');
+                  await import('@/store/notifications');
                 useNotificationsStore
                   .getState()
                   .dismissNotification(notification_key);

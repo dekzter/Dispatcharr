@@ -1,5 +1,5 @@
-import { create } from "zustand";
-import API from "~/lib/api";
+import { create } from 'zustand';
+import API from '@/lib/api';
 
 export const usePluginStore = create((set, get) => ({
   plugins: [],
@@ -19,7 +19,7 @@ export const usePluginStore = create((set, get) => ({
   updatePlugin: (key, updates) => {
     set((state) => ({
       plugins: state.plugins.map((p) =>
-        p.key === key ? { ...p, ...updates } : p,
+        p.key === key ? { ...p, ...updates } : p
       ),
     }));
   },

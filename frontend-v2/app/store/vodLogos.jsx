@@ -1,5 +1,5 @@
-import { create } from "zustand";
-import api from "~/lib/api";
+import { create } from 'zustand';
+import api from '@/lib/api';
 
 const useVODLogosStore = create((set) => ({
   vodLogos: {},
@@ -71,8 +71,8 @@ const useVODLogosStore = create((set) => ({
       });
       return response;
     } catch (error) {
-      console.error("Failed to fetch VOD logos:", error);
-      set({ error: "Failed to load VOD logos.", isLoading: false });
+      console.error('Failed to fetch VOD logos:', error);
+      set({ error: 'Failed to load VOD logos.', isLoading: false });
       throw error;
     }
   },
@@ -83,7 +83,7 @@ const useVODLogosStore = create((set) => ({
       const state = useVODLogosStore.getState();
       state._removeLogosFromState(logoId);
     } catch (error) {
-      console.error("Failed to delete VOD logo:", error);
+      console.error('Failed to delete VOD logo:', error);
       throw error;
     }
   },
@@ -94,7 +94,7 @@ const useVODLogosStore = create((set) => ({
       const state = useVODLogosStore.getState();
       state._removeLogosFromState(logoIds);
     } catch (error) {
-      console.error("Failed to delete VOD logos:", error);
+      console.error('Failed to delete VOD logos:', error);
       throw error;
     }
   },
@@ -112,7 +112,7 @@ const useVODLogosStore = create((set) => ({
 
       return result;
     } catch (error) {
-      console.error("Failed to cleanup unused VOD logos:", error);
+      console.error('Failed to cleanup unused VOD logos:', error);
       throw error;
     }
   },
@@ -120,14 +120,14 @@ const useVODLogosStore = create((set) => ({
   getUnusedLogosCount: async () => {
     try {
       const response = await api.getVODLogos({
-        used: "false",
+        used: 'false',
         page_size: 1, // Fetch only 1 item to minimize data transfer
       });
 
       // Return the count from the paginated response
       return response.count || 0;
     } catch (error) {
-      console.error("Failed to fetch unused logos count:", error);
+      console.error('Failed to fetch unused logos count:', error);
       throw error;
     }
   },

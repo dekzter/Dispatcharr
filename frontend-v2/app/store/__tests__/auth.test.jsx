@@ -1,25 +1,25 @@
-import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
-import { renderHook, act } from "@testing-library/react";
-import useAuthStore from "../auth";
-import useSettingsStore from "../settings";
-import useChannelsStore from "../channels";
-import usePlaylistsStore from "../playlists";
-import useEPGsStore from "../epgs";
-import useStreamProfilesStore from "../streamProfiles";
-import useUserAgentsStore from "../userAgents";
-import useUsersStore from "../users";
-import API from "../~/lib/api";
-import { USER_LEVELS } from "../../constants";
+import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
+import { renderHook, act } from '@testing-library/react';
+import useAuthStore from '../auth';
+import useSettingsStore from '../settings';
+import useChannelsStore from '../channels';
+import usePlaylistsStore from '../playlists';
+import useEPGsStore from '../epgs';
+import useStreamProfilesStore from '../streamProfiles';
+import useUserAgentsStore from '../userAgents';
+import useUsersStore from '../users';
+import API from '../@/lib/api';
+import { USER_LEVELS } from '../../constants';
 
 // Mock all store dependencies
-vi.mock("../settings");
-vi.mock("../channels");
-vi.mock("../playlists");
-vi.mock("../epgs");
-vi.mock("../streamProfiles");
-vi.mock("../userAgents");
-vi.mock("../users");
-vi.mock("../~/lib/api");
+vi.mock('../settings');
+vi.mock('../channels');
+vi.mock('../playlists');
+vi.mock('../epgs');
+vi.mock('../streamProfiles');
+vi.mock('../userAgents');
+vi.mock('../users');
+vi.mock('../@/lib/api');
 
 // Mock localStorage
 const localStorageMock = (() => {
@@ -48,7 +48,7 @@ const createMockToken = (expiresInSeconds = 3600) => {
   return `header.${payload}.signature`;
 };
 
-describe("useAuthStore", () => {
+describe('useAuthStore', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorageMock.clear();
@@ -57,7 +57,7 @@ describe("useAuthStore", () => {
     useSettingsStore.mockImplementation((selector) =>
       selector({
         fetchSettings: vi.fn().mockResolvedValue(),
-      }),
+      })
     );
 
     useChannelsStore.mockImplementation((selector) =>
@@ -65,38 +65,38 @@ describe("useAuthStore", () => {
         fetchChannels: vi.fn().mockResolvedValue(),
         fetchChannelGroups: vi.fn().mockResolvedValue(),
         fetchChannelProfiles: vi.fn().mockResolvedValue(),
-      }),
+      })
     );
 
     usePlaylistsStore.mockImplementation((selector) =>
       selector({
         fetchPlaylists: vi.fn().mockResolvedValue(),
-      }),
+      })
     );
 
     useEPGsStore.mockImplementation((selector) =>
       selector({
         fetchEPGs: vi.fn().mockResolvedValue(),
         fetchEPGData: vi.fn().mockResolvedValue(),
-      }),
+      })
     );
 
     useStreamProfilesStore.mockImplementation((selector) =>
       selector({
         fetchProfiles: vi.fn().mockResolvedValue(),
-      }),
+      })
     );
 
     useUserAgentsStore.mockImplementation((selector) =>
       selector({
         fetchUserAgents: vi.fn().mockResolvedValue(),
-      }),
+      })
     );
 
     useUsersStore.mockImplementation((selector) =>
       selector({
         fetchUsers: vi.fn().mockResolvedValue(),
-      }),
+      })
     );
   });
 
@@ -109,9 +109,9 @@ describe("useAuthStore", () => {
         isInitialized: false,
         needsSuperuser: false,
         user: {
-          username: "",
-          email: "",
-          user_level: "",
+          username: '',
+          email: '',
+          user_level: '',
         },
         isLoading: false,
         error: null,
@@ -123,17 +123,17 @@ describe("useAuthStore", () => {
     }
   });
 
-  describe("Initial State", () => {
-    it("should initialize with default state", () => {
+  describe('Initial State', () => {
+    it('should initialize with default state', () => {
       const { result } = renderHook(() => useAuthStore());
 
       expect(result.current.isAuthenticated).toBe(false);
       expect(result.current.isInitialized).toBe(false);
       expect(result.current.needsSuperuser).toBe(false);
       expect(result.current.user).toEqual({
-        username: "",
-        email: "",
-        user_level: "",
+        username: '',
+        email: '',
+        user_level: '',
       });
       expect(result.current.isLoading).toBe(false);
       expect(result.current.error).toBeNull();
@@ -141,8 +141,8 @@ describe("useAuthStore", () => {
     });
   });
 
-  describe("login", () => {
-    it("should successfully login and store tokens", async () => {
+  describe('login', () => {
+    it('should successfully login and store tokens', async () => {
       const mockAccessToken = createMockToken();
       const mockRefreshToken = createMockToken(86400);
 
@@ -155,45 +155,45 @@ describe("useAuthStore", () => {
 
       await act(async () => {
         await result.current.login({
-          username: "testuser",
-          password: "password",
+          username: 'testuser',
+          password: 'password',
         });
       });
 
-      expect(API.login).toHaveBeenCalledWith("testuser", "password");
+      expect(API.login).toHaveBeenCalledWith('testuser', 'password');
       expect(localStorageMock.setItem).toHaveBeenCalledWith(
-        "accessToken",
-        mockAccessToken,
+        'accessToken',
+        mockAccessToken
       );
       expect(localStorageMock.setItem).toHaveBeenCalledWith(
-        "refreshToken",
-        mockRefreshToken,
+        'refreshToken',
+        mockRefreshToken
       );
       expect(localStorageMock.setItem).toHaveBeenCalledWith(
-        "tokenExpiration",
-        expect.any(Number),
+        'tokenExpiration',
+        expect.any(Number)
       );
     });
 
-    it("should handle login failure", async () => {
-      API.login.mockRejectedValue(new Error("Invalid credentials"));
+    it('should handle login failure', async () => {
+      API.login.mockRejectedValue(new Error('Invalid credentials'));
 
       const { result } = renderHook(() => useAuthStore());
 
       await act(async () => {
-        await result.current.login({ username: "testuser", password: "wrong" });
+        await result.current.login({ username: 'testuser', password: 'wrong' });
       });
 
-      expect(API.login).toHaveBeenCalledWith("testuser", "wrong");
+      expect(API.login).toHaveBeenCalledWith('testuser', 'wrong');
       expect(result.current.isAuthenticated).toBe(false);
       expect(localStorageMock.setItem).not.toHaveBeenCalled();
     });
   });
 
-  describe("getRefreshToken", () => {
-    it("should refresh token successfully", async () => {
+  describe('getRefreshToken', () => {
+    it('should refresh token successfully', async () => {
       const mockNewAccessToken = createMockToken();
-      localStorageMock.getItem.mockReturnValue("old-refresh-token");
+      localStorageMock.getItem.mockReturnValue('old-refresh-token');
 
       API.refreshToken.mockResolvedValue({
         access: mockNewAccessToken,
@@ -206,15 +206,15 @@ describe("useAuthStore", () => {
         newToken = await result.current.getRefreshToken();
       });
 
-      expect(API.refreshToken).toHaveBeenCalledWith("old-refresh-token");
+      expect(API.refreshToken).toHaveBeenCalledWith('old-refresh-token');
       expect(newToken).toBe(mockNewAccessToken);
       expect(localStorageMock.setItem).toHaveBeenCalledWith(
-        "accessToken",
-        mockNewAccessToken,
+        'accessToken',
+        mockNewAccessToken
       );
     });
 
-    it("should return false if no refresh token exists", async () => {
+    it('should return false if no refresh token exists', async () => {
       localStorageMock.getItem.mockReturnValue(null);
 
       const { result } = renderHook(() => useAuthStore());
@@ -228,9 +228,9 @@ describe("useAuthStore", () => {
       expect(API.refreshToken).not.toHaveBeenCalled();
     });
 
-    it("should logout on refresh token failure", async () => {
-      localStorageMock.getItem.mockReturnValue("invalid-refresh-token");
-      API.refreshToken.mockRejectedValue(new Error("Invalid token"));
+    it('should logout on refresh token failure', async () => {
+      localStorageMock.getItem.mockReturnValue('invalid-refresh-token');
+      API.refreshToken.mockRejectedValue(new Error('Invalid token'));
       API.logout.mockResolvedValue();
 
       const { result } = renderHook(() => useAuthStore());
@@ -240,22 +240,22 @@ describe("useAuthStore", () => {
       });
 
       expect(result.current.isAuthenticated).toBe(false);
-      expect(localStorageMock.removeItem).toHaveBeenCalledWith("accessToken");
-      expect(localStorageMock.removeItem).toHaveBeenCalledWith("refreshToken");
+      expect(localStorageMock.removeItem).toHaveBeenCalledWith('accessToken');
+      expect(localStorageMock.removeItem).toHaveBeenCalledWith('refreshToken');
       expect(localStorageMock.removeItem).toHaveBeenCalledWith(
-        "tokenExpiration",
+        'tokenExpiration'
       );
     });
   });
 
-  describe("getToken", () => {
-    it("should return valid access token if not expired", async () => {
+  describe('getToken', () => {
+    it('should return valid access token if not expired', async () => {
       const mockToken = createMockToken(3600);
       const now = Math.floor(Date.now() / 1000);
 
       localStorageMock.getItem.mockImplementation((key) => {
-        if (key === "tokenExpiration") return (now + 1800).toString();
-        if (key === "accessToken") return mockToken;
+        if (key === 'tokenExpiration') return (now + 1800).toString();
+        if (key === 'accessToken') return mockToken;
         return null;
       });
 
@@ -269,13 +269,13 @@ describe("useAuthStore", () => {
       expect(token).toBe(mockToken);
     });
 
-    it("should refresh token if expired", async () => {
+    it('should refresh token if expired', async () => {
       const now = Math.floor(Date.now() / 1000);
       const mockNewToken = createMockToken();
 
       localStorageMock.getItem.mockImplementation((key) => {
-        if (key === "tokenExpiration") return (now - 100).toString();
-        if (key === "refreshToken") return "refresh-token";
+        if (key === 'tokenExpiration') return (now - 100).toString();
+        if (key === 'refreshToken') return 'refresh-token';
         return null;
       });
 
@@ -293,8 +293,8 @@ describe("useAuthStore", () => {
     });
   });
 
-  describe("logout", () => {
-    it("should clear tokens and call logout API", async () => {
+  describe('logout', () => {
+    it('should clear tokens and call logout API', async () => {
       API.logout.mockResolvedValue();
 
       const { result } = renderHook(() => useAuthStore());
@@ -306,15 +306,15 @@ describe("useAuthStore", () => {
       expect(API.logout).toHaveBeenCalled();
       expect(result.current.isAuthenticated).toBe(false);
       expect(result.current.user).toBeNull();
-      expect(localStorageMock.removeItem).toHaveBeenCalledWith("accessToken");
-      expect(localStorageMock.removeItem).toHaveBeenCalledWith("refreshToken");
+      expect(localStorageMock.removeItem).toHaveBeenCalledWith('accessToken');
+      expect(localStorageMock.removeItem).toHaveBeenCalledWith('refreshToken');
       expect(localStorageMock.removeItem).toHaveBeenCalledWith(
-        "tokenExpiration",
+        'tokenExpiration'
       );
     });
 
-    it("should continue logout even if API call fails", async () => {
-      API.logout.mockRejectedValue(new Error("API error"));
+    it('should continue logout even if API call fails', async () => {
+      API.logout.mockRejectedValue(new Error('API error'));
 
       const { result } = renderHook(() => useAuthStore());
 
@@ -327,10 +327,10 @@ describe("useAuthStore", () => {
     });
   });
 
-  describe("initializeAuth", () => {
-    it("should initialize auth with valid refresh token", async () => {
+  describe('initializeAuth', () => {
+    it('should initialize auth with valid refresh token', async () => {
       const mockToken = createMockToken();
-      localStorageMock.getItem.mockReturnValue("valid-refresh-token");
+      localStorageMock.getItem.mockReturnValue('valid-refresh-token');
       API.refreshToken.mockResolvedValue({ access: mockToken });
 
       const { result } = renderHook(() => useAuthStore());
@@ -343,7 +343,7 @@ describe("useAuthStore", () => {
       expect(initialized).toBe(true);
     });
 
-    it("should return false if no refresh token exists", async () => {
+    it('should return false if no refresh token exists', async () => {
       localStorageMock.getItem.mockReturnValue(null);
 
       const { result } = renderHook(() => useAuthStore());
@@ -357,7 +357,7 @@ describe("useAuthStore", () => {
     });
   });
 
-  describe("initData", () => {
+  describe('initData', () => {
     const fetchSettings = vi.fn().mockResolvedValue();
     const fetchChannels = vi.fn().mockResolvedValue();
     const fetchChannelGroups = vi.fn().mockResolvedValue();
@@ -384,10 +384,10 @@ describe("useAuthStore", () => {
     useUserAgentsStore.getState = () => ({ fetchUserAgents });
     useUsersStore.getState = () => ({ fetchUsers });
 
-    it("should initialize data for admin user", async () => {
+    it('should initialize data for admin user', async () => {
       const mockUser = {
-        username: "admin",
-        email: "admin@test.com",
+        username: 'admin',
+        email: 'admin@test.com',
         user_level: USER_LEVELS.ADMIN,
       };
 
@@ -407,10 +407,10 @@ describe("useAuthStore", () => {
       expect(fetchUsers).toHaveBeenCalled();
     });
 
-    it("should not fetch users for non-admin user", async () => {
+    it('should not fetch users for non-admin user', async () => {
       const mockUser = {
-        username: "reseller",
-        email: "reseller@test.com",
+        username: 'reseller',
+        email: 'reseller@test.com',
         user_level: USER_LEVELS.RESELLER,
       };
 
@@ -425,10 +425,10 @@ describe("useAuthStore", () => {
       expect(fetchUsers).not.toHaveBeenCalled();
     });
 
-    it("should throw error for unauthorized user level", async () => {
+    it('should throw error for unauthorized user level', async () => {
       const mockUser = {
-        username: "streamer",
-        email: "streamer@test.com",
+        username: 'streamer',
+        email: 'streamer@test.com',
         user_level: USER_LEVELS.STREAMER,
       };
 
@@ -439,14 +439,14 @@ describe("useAuthStore", () => {
       await expect(
         act(async () => {
           await result.current.initData();
-        }),
-      ).rejects.toThrow("Unauthorized");
+        })
+      ).rejects.toThrow('Unauthorized');
     });
 
-    it("should handle errors during data initialization", async () => {
+    it('should handle errors during data initialization', async () => {
       const mockUser = {
-        username: "admin",
-        email: "admin@test.com",
+        username: 'admin',
+        email: 'admin@test.com',
         user_level: USER_LEVELS.ADMIN,
       };
 
@@ -454,7 +454,7 @@ describe("useAuthStore", () => {
 
       const fetchChannels = vi
         .fn()
-        .mockRejectedValue(new Error("Fetch failed"));
+        .mockRejectedValue(new Error('Fetch failed'));
 
       useChannelsStore.getState = vi.fn(() => ({
         fetchChannels,
@@ -471,12 +471,12 @@ describe("useAuthStore", () => {
     });
   });
 
-  describe("setUser", () => {
-    it("should update user state", () => {
+  describe('setUser', () => {
+    it('should update user state', () => {
       const { result } = renderHook(() => useAuthStore());
       const newUser = {
-        username: "test",
-        email: "test@test.com",
+        username: 'test',
+        email: 'test@test.com',
         user_level: USER_LEVELS.ADMIN,
       };
 
@@ -488,8 +488,8 @@ describe("useAuthStore", () => {
     });
   });
 
-  describe("setIsAuthenticated", () => {
-    it("should update authentication state", () => {
+  describe('setIsAuthenticated', () => {
+    it('should update authentication state', () => {
       const { result } = renderHook(() => useAuthStore());
 
       act(() => {
@@ -500,8 +500,8 @@ describe("useAuthStore", () => {
     });
   });
 
-  describe("setSuperuserExists", () => {
-    it("should update superuser exists state", () => {
+  describe('setSuperuserExists', () => {
+    it('should update superuser exists state', () => {
       const { result } = renderHook(() => useAuthStore());
 
       act(() => {
@@ -512,9 +512,9 @@ describe("useAuthStore", () => {
     });
   });
 
-  describe("getRefreshToken edge cases", () => {
-    it("should return false if API response has no access token", async () => {
-      localStorageMock.getItem.mockReturnValue("refresh-token");
+  describe('getRefreshToken edge cases', () => {
+    it('should return false if API response has no access token', async () => {
+      localStorageMock.getItem.mockReturnValue('refresh-token');
       API.refreshToken.mockResolvedValue({});
 
       const { result } = renderHook(() => useAuthStore());
@@ -528,16 +528,16 @@ describe("useAuthStore", () => {
     });
   });
 
-  describe("login edge cases", () => {
-    it("should not update state if response has no access token", async () => {
+  describe('login edge cases', () => {
+    it('should not update state if response has no access token', async () => {
       API.login.mockResolvedValue({});
 
       const { result } = renderHook(() => useAuthStore());
 
       await act(async () => {
         await result.current.login({
-          username: "testuser",
-          password: "password",
+          username: 'testuser',
+          password: 'password',
         });
       });
 
@@ -546,8 +546,8 @@ describe("useAuthStore", () => {
     });
   });
 
-  describe("logout edge cases", () => {
-    it("should reset isInitializing flag on logout", async () => {
+  describe('logout edge cases', () => {
+    it('should reset isInitializing flag on logout', async () => {
       useAuthStore.setState({ isInitializing: true });
       API.logout.mockResolvedValue();
 
@@ -561,10 +561,10 @@ describe("useAuthStore", () => {
     });
   });
 
-  describe("initializeAuth edge cases", () => {
-    it("should return false if refresh token API call fails", async () => {
-      localStorageMock.getItem.mockReturnValue("refresh-token");
-      API.refreshToken.mockRejectedValue(new Error("Token expired"));
+  describe('initializeAuth edge cases', () => {
+    it('should return false if refresh token API call fails', async () => {
+      localStorageMock.getItem.mockReturnValue('refresh-token');
+      API.refreshToken.mockRejectedValue(new Error('Token expired'));
       API.logout.mockResolvedValue();
 
       const { result } = renderHook(() => useAuthStore());
@@ -577,8 +577,8 @@ describe("useAuthStore", () => {
       expect(initialized).toBe(false);
     });
 
-    it("should return false if refresh returns no access token", async () => {
-      localStorageMock.getItem.mockReturnValue("refresh-token");
+    it('should return false if refresh returns no access token', async () => {
+      localStorageMock.getItem.mockReturnValue('refresh-token');
       API.refreshToken.mockResolvedValue({});
 
       const { result } = renderHook(() => useAuthStore());
@@ -592,8 +592,8 @@ describe("useAuthStore", () => {
     });
   });
 
-  describe("initData edge cases", () => {
-    it("should skip initialization if already initialized", async () => {
+  describe('initData edge cases', () => {
+    it('should skip initialization if already initialized', async () => {
       useAuthStore.setState({ isInitialized: true });
 
       const { result } = renderHook(() => useAuthStore());
@@ -605,7 +605,7 @@ describe("useAuthStore", () => {
       expect(API.me).not.toHaveBeenCalled();
     });
 
-    it("should skip initialization if already initializing", async () => {
+    it('should skip initialization if already initializing', async () => {
       useAuthStore.setState({ isInitializing: true });
 
       const { result } = renderHook(() => useAuthStore());
@@ -617,14 +617,14 @@ describe("useAuthStore", () => {
       expect(API.me).not.toHaveBeenCalled();
     });
 
-    it("should set isInitializing to false on error", async () => {
+    it('should set isInitializing to false on error', async () => {
       // Reset state before the test
       useAuthStore.setState({
         isInitializing: false,
         isInitialized: false,
       });
 
-      API.me.mockRejectedValue(new Error("API error"));
+      API.me.mockRejectedValue(new Error('API error'));
 
       const { result } = renderHook(() => useAuthStore());
 
@@ -640,10 +640,10 @@ describe("useAuthStore", () => {
       expect(result.current.isInitialized).toBe(false);
     });
 
-    it("should call fetchChannels in background after initialization", async () => {
+    it('should call fetchChannels in background after initialization', async () => {
       const mockUser = {
-        username: "admin",
-        email: "admin@test.com",
+        username: 'admin',
+        email: 'admin@test.com',
         user_level: USER_LEVELS.ADMIN,
       };
 

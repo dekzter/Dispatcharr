@@ -1,16 +1,16 @@
+import { Button } from '@/components/ui/button';
 import {
   Pagination,
   PaginationContent,
   PaginationEllipsis,
   PaginationItem,
   PaginationLink,
-} from '~/components/ui/pagination';
-import { Button } from '~/components/ui/button';
+} from '@/components/ui/pagination';
 import {
+  ChevronLeft,
+  ChevronRight,
   ChevronsLeft,
   ChevronsRight,
-  ChevronRight,
-  ChevronLeft,
 } from 'lucide-react';
 
 interface SmartPaginationProps {

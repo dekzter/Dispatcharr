@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Skeleton } from '~/components/ui/skeleton';
-import useLogosStore from '~/store/logos';
+import { Skeleton } from '@/components/ui/skeleton';
+import useLogosStore from '@/store/logos';
+import { useEffect, useRef, useState } from 'react';
 
 // Global request queue to batch logo requests
 const logoRequestQueue = new Set();
@@ -104,7 +104,7 @@ const LazyLogo = ({
           height: style.maxHeight || 18,
           width: style.maxWidth || 55,
           borderRadius: 4,
-          ...style
+          ...style,
         }}
       />
     );

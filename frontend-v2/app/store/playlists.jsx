@@ -1,5 +1,5 @@
-import { create } from "zustand";
-import api from "~/lib/api";
+import { create } from 'zustand';
+import api from '@/lib/api';
 
 const usePlaylistsStore = create((set) => ({
   playlists: [],
@@ -8,8 +8,8 @@ const usePlaylistsStore = create((set) => ({
   isLoading: false,
   error: null,
 
-  profileSearchPreview: "",
-  profileResult: "",
+  profileSearchPreview: '',
+  profileResult: '',
 
   // Add a state variable to trigger M3U editing
   editPlaylistId: null,
@@ -34,8 +34,8 @@ const usePlaylistsStore = create((set) => ({
 
       return playlist;
     } catch (error) {
-      console.error("Failed to fetch playlists:", error);
-      set({ error: "Failed to load playlists.", isLoading: false });
+      console.error('Failed to fetch playlists:', error);
+      set({ error: 'Failed to load playlists.', isLoading: false });
     }
   },
 
@@ -52,8 +52,8 @@ const usePlaylistsStore = create((set) => ({
         }, {}),
       });
     } catch (error) {
-      console.error("Failed to fetch playlists:", error);
-      set({ error: "Failed to load playlists.", isLoading: false });
+      console.error('Failed to fetch playlists:', error);
+      set({ error: 'Failed to load playlists.', isLoading: false });
     }
   },
 
@@ -69,7 +69,7 @@ const usePlaylistsStore = create((set) => ({
   updatePlaylist: (playlist) =>
     set((state) => ({
       playlists: state.playlists.map((pl) =>
-        pl.id === playlist.id ? playlist : pl,
+        pl.id === playlist.id ? playlist : pl
       ),
       profiles: {
         ...state.profiles,
@@ -88,7 +88,7 @@ const usePlaylistsStore = create((set) => ({
   removePlaylists: (playlistIds) =>
     set((state) => ({
       playlists: state.playlists.filter(
-        (playlist) => !playlistIds.includes(playlist.id),
+        (playlist) => !playlistIds.includes(playlist.id)
       ),
       // @TODO: remove playlist profiles here
     })),
@@ -113,7 +113,7 @@ const usePlaylistsStore = create((set) => ({
       // Don't replace 'initializing' status with empty/early server messages
       if (
         existingProgress &&
-        existingProgress.action === "initializing" &&
+        existingProgress.action === 'initializing' &&
         accountIdOrData.progress === 0
       ) {
         return state; // Keep showing 'initializing' until real progress comes

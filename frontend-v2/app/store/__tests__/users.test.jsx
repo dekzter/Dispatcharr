@@ -1,11 +1,11 @@
-import { renderHook, act } from "@testing-library/react";
-import { describe, it, expect, beforeEach, vi } from "vitest";
-import useUsersStore from "../users";
-import api from "../~/lib/api";
+import { renderHook, act } from '@testing-library/react';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import useUsersStore from '../users';
+import api from '../@/lib/api';
 
-vi.mock("../~/lib/api");
+vi.mock('../@/lib/api');
 
-describe("useUsersStore", () => {
+describe('useUsersStore', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     useUsersStore.setState({
@@ -15,7 +15,7 @@ describe("useUsersStore", () => {
     });
   });
 
-  it("should initialize with default state", () => {
+  it('should initialize with default state', () => {
     const { result } = renderHook(() => useUsersStore());
 
     expect(result.current.users).toEqual([]);
@@ -23,10 +23,10 @@ describe("useUsersStore", () => {
     expect(result.current.error).toBe(null);
   });
 
-  it("should fetch users successfully", async () => {
+  it('should fetch users successfully', async () => {
     const mockUsers = [
-      { id: 1, name: "User 1", email: "user1@example.com" },
-      { id: 2, name: "User 2", email: "user2@example.com" },
+      { id: 1, name: 'User 1', email: 'user1@example.com' },
+      { id: 2, name: 'User 2', email: 'user2@example.com' },
     ];
 
     api.getUsers.mockResolvedValue(mockUsers);
@@ -43,12 +43,12 @@ describe("useUsersStore", () => {
     expect(result.current.error).toBe(null);
   });
 
-  it("should handle fetch users error", async () => {
-    const mockError = new Error("Network error");
+  it('should handle fetch users error', async () => {
+    const mockError = new Error('Network error');
     api.getUsers.mockRejectedValue(mockError);
 
     const consoleErrorSpy = vi
-      .spyOn(console, "error")
+      .spyOn(console, 'error')
       .mockImplementation(() => {});
 
     const { result } = renderHook(() => useUsersStore());
@@ -57,17 +57,17 @@ describe("useUsersStore", () => {
       await result.current.fetchUsers();
     });
 
-    expect(result.current.error).toBe("Failed to load users.");
+    expect(result.current.error).toBe('Failed to load users.');
     expect(result.current.isLoading).toBe(false);
     expect(consoleErrorSpy).toHaveBeenCalledWith(
-      "Failed to fetch users:",
-      mockError,
+      'Failed to fetch users:',
+      mockError
     );
 
     consoleErrorSpy.mockRestore();
   });
 
-  it("should set loading state during fetch", async () => {
+  it('should set loading state during fetch', async () => {
     let resolvePromise;
     const promise = new Promise((resolve) => {
       resolvePromise = resolve;
@@ -92,27 +92,27 @@ describe("useUsersStore", () => {
     expect(result.current.isLoading).toBe(false);
   });
 
-  it("should add user", () => {
+  it('should add user', () => {
     useUsersStore.setState({
-      users: [{ id: 1, name: "User 1", email: "user1@example.com" }],
+      users: [{ id: 1, name: 'User 1', email: 'user1@example.com' }],
     });
 
     const { result } = renderHook(() => useUsersStore());
-    const newUser = { id: 2, name: "User 2", email: "user2@example.com" };
+    const newUser = { id: 2, name: 'User 2', email: 'user2@example.com' };
 
     act(() => {
       result.current.addUser(newUser);
     });
 
     expect(result.current.users).toEqual([
-      { id: 1, name: "User 1", email: "user1@example.com" },
-      { id: 2, name: "User 2", email: "user2@example.com" },
+      { id: 1, name: 'User 1', email: 'user1@example.com' },
+      { id: 2, name: 'User 2', email: 'user2@example.com' },
     ]);
   });
 
-  it("should add user to empty users", () => {
+  it('should add user to empty users', () => {
     const { result } = renderHook(() => useUsersStore());
-    const newUser = { id: 1, name: "User 1", email: "user1@example.com" };
+    const newUser = { id: 1, name: 'User 1', email: 'user1@example.com' };
 
     act(() => {
       result.current.addUser(newUser);
@@ -121,19 +121,19 @@ describe("useUsersStore", () => {
     expect(result.current.users).toEqual([newUser]);
   });
 
-  it("should update user", () => {
+  it('should update user', () => {
     useUsersStore.setState({
       users: [
-        { id: 1, name: "User 1", email: "user1@example.com" },
-        { id: 2, name: "User 2", email: "user2@example.com" },
+        { id: 1, name: 'User 1', email: 'user1@example.com' },
+        { id: 2, name: 'User 2', email: 'user2@example.com' },
       ],
     });
 
     const { result } = renderHook(() => useUsersStore());
     const updatedUser = {
       id: 1,
-      name: "Updated User",
-      email: "updated@example.com",
+      name: 'Updated User',
+      email: 'updated@example.com',
     };
 
     act(() => {
@@ -141,24 +141,24 @@ describe("useUsersStore", () => {
     });
 
     expect(result.current.users).toEqual([
-      { id: 1, name: "Updated User", email: "updated@example.com" },
-      { id: 2, name: "User 2", email: "user2@example.com" },
+      { id: 1, name: 'Updated User', email: 'updated@example.com' },
+      { id: 2, name: 'User 2', email: 'user2@example.com' },
     ]);
   });
 
-  it("should not modify other users when updating", () => {
+  it('should not modify other users when updating', () => {
     useUsersStore.setState({
       users: [
-        { id: 1, name: "User 1", email: "user1@example.com" },
-        { id: 2, name: "User 2", email: "user2@example.com" },
+        { id: 1, name: 'User 1', email: 'user1@example.com' },
+        { id: 2, name: 'User 2', email: 'user2@example.com' },
       ],
     });
 
     const { result } = renderHook(() => useUsersStore());
     const updatedUser = {
       id: 1,
-      name: "Updated User",
-      email: "updated@example.com",
+      name: 'Updated User',
+      email: 'updated@example.com',
     };
 
     act(() => {
@@ -167,15 +167,15 @@ describe("useUsersStore", () => {
 
     expect(result.current.users[1]).toEqual({
       id: 2,
-      name: "User 2",
-      email: "user2@example.com",
+      name: 'User 2',
+      email: 'user2@example.com',
     });
   });
 
-  it("should not modify users when updating non-existent user", () => {
+  it('should not modify users when updating non-existent user', () => {
     const initialUsers = [
-      { id: 1, name: "User 1", email: "user1@example.com" },
-      { id: 2, name: "User 2", email: "user2@example.com" },
+      { id: 1, name: 'User 1', email: 'user1@example.com' },
+      { id: 2, name: 'User 2', email: 'user2@example.com' },
     ];
 
     useUsersStore.setState({
@@ -185,8 +185,8 @@ describe("useUsersStore", () => {
     const { result } = renderHook(() => useUsersStore());
     const nonExistentUser = {
       id: 999,
-      name: "Non-existent",
-      email: "none@example.com",
+      name: 'Non-existent',
+      email: 'none@example.com',
     };
 
     act(() => {
@@ -196,12 +196,12 @@ describe("useUsersStore", () => {
     expect(result.current.users).toEqual(initialUsers);
   });
 
-  it("should remove user", () => {
+  it('should remove user', () => {
     useUsersStore.setState({
       users: [
-        { id: 1, name: "User 1", email: "user1@example.com" },
-        { id: 2, name: "User 2", email: "user2@example.com" },
-        { id: 3, name: "User 3", email: "user3@example.com" },
+        { id: 1, name: 'User 1', email: 'user1@example.com' },
+        { id: 2, name: 'User 2', email: 'user2@example.com' },
+        { id: 3, name: 'User 3', email: 'user3@example.com' },
       ],
     });
 
@@ -212,15 +212,15 @@ describe("useUsersStore", () => {
     });
 
     expect(result.current.users).toEqual([
-      { id: 1, name: "User 1", email: "user1@example.com" },
-      { id: 3, name: "User 3", email: "user3@example.com" },
+      { id: 1, name: 'User 1', email: 'user1@example.com' },
+      { id: 3, name: 'User 3', email: 'user3@example.com' },
     ]);
   });
 
-  it("should handle removing non-existent user", () => {
+  it('should handle removing non-existent user', () => {
     const initialUsers = [
-      { id: 1, name: "User 1", email: "user1@example.com" },
-      { id: 2, name: "User 2", email: "user2@example.com" },
+      { id: 1, name: 'User 1', email: 'user1@example.com' },
+      { id: 2, name: 'User 2', email: 'user2@example.com' },
     ];
 
     useUsersStore.setState({
@@ -236,7 +236,7 @@ describe("useUsersStore", () => {
     expect(result.current.users).toEqual(initialUsers);
   });
 
-  it("should handle removing from empty users", () => {
+  it('should handle removing from empty users', () => {
     const { result } = renderHook(() => useUsersStore());
 
     act(() => {
@@ -246,7 +246,7 @@ describe("useUsersStore", () => {
     expect(result.current.users).toEqual([]);
   });
 
-  it("should handle fetch with empty results", async () => {
+  it('should handle fetch with empty results', async () => {
     api.getUsers.mockResolvedValue([]);
 
     const { result } = renderHook(() => useUsersStore());
@@ -258,12 +258,12 @@ describe("useUsersStore", () => {
     expect(result.current.users).toEqual([]);
   });
 
-  it("should not modify other users when removing", () => {
+  it('should not modify other users when removing', () => {
     useUsersStore.setState({
       users: [
-        { id: 1, name: "User 1", email: "user1@example.com" },
-        { id: 2, name: "User 2", email: "user2@example.com" },
-        { id: 3, name: "User 3", email: "user3@example.com" },
+        { id: 1, name: 'User 1', email: 'user1@example.com' },
+        { id: 2, name: 'User 2', email: 'user2@example.com' },
+        { id: 3, name: 'User 3', email: 'user3@example.com' },
       ],
     });
 
@@ -275,13 +275,13 @@ describe("useUsersStore", () => {
 
     expect(result.current.users[0]).toEqual({
       id: 1,
-      name: "User 1",
-      email: "user1@example.com",
+      name: 'User 1',
+      email: 'user1@example.com',
     });
     expect(result.current.users[1]).toEqual({
       id: 3,
-      name: "User 3",
-      email: "user3@example.com",
+      name: 'User 3',
+      email: 'user3@example.com',
     });
   });
 });

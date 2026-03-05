@@ -1,21 +1,68 @@
-import React, {
-  useEffect,
-  useState,
-  useMemo,
-  useCallback,
-  useRef,
-} from 'react';
+import ConfirmationDialog from '@/components/ConfirmationDialog';
+import LazyLogo from '@/components/dispatcharr/lazy-logo';
+import { SearchableInput } from '@/components/dispatcharr/searchable-input';
+import { SmartPagination } from '@/components/SmartPagination';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
-  DndContext,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Field, FieldLabel } from '@/components/ui/field';
+import { Input } from '@/components/ui/input';
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from '@/components/ui/input-group';
+import { Label } from '@/components/ui/label';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Switch } from '@/components/ui/switch';
+import {
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { useChannelLogoSelection } from '@/hooks/use-smart-logos';
+import { useTablePreferences } from '@/hooks/useTablePreferences';
+import API from '@/lib/api';
+import { USER_LEVELS } from '@/lib/constants';
+import { copyToClipboard, useDebounce } from '@/lib/utils';
+import useAuthStore from '@/store/auth';
+import useChannelsStore from '@/store/channels';
+import useChannelsTableStore from '@/store/channelsTable';
+import useEPGsStore from '@/store/epgs';
+import useSettingsStore from '@/store/settings';
+import useVideoStore from '@/store/useVideoStore';
+import useWarningsStore from '@/store/warnings';
+import {
   closestCenter,
+  DndContext,
   PointerSensor,
   useSensor,
   useSensors,
 } from '@dnd-kit/core';
 import {
   SortableContext,
-  verticalListSortingStrategy,
   useSortable,
+  verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import {
@@ -24,119 +71,175 @@ import {
   getExpandedRowModel,
   useReactTable,
   type ColumnDef,
-  type SortingState,
   type ColumnFiltersState,
-  type VisibilityState,
   type ExpandedState,
 } from '@tanstack/react-table';
-import { useTablePreferences } from '~/hooks/useTablePreferences';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '~/components/ui/table';
-import { Button } from '~/components/ui/button';
-import { Input } from '~/components/ui/input';
-import { Badge } from '~/components/ui/badge';
-import { Checkbox } from '~/components/ui/checkbox';
-import { Skeleton } from '~/components/ui/skeleton';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '~/components/ui/select';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '~/components/ui/dropdown-menu';
-import {
-  ArrowUpDown,
-  ArrowUp,
-  ArrowDown,
-  Plus,
-  Edit,
-  Trash2,
-  MoreHorizontal,
-  RefreshCw,
   AlignJustify,
-  AlignLeft,
-  AlignCenter,
-  ChevronRight,
+  ArrowDown,
+  ArrowDown01,
+  ArrowUp,
+  ArrowUpDown,
   ChevronDown,
-  Tv2,
-  SquarePen,
-  SquareMinus,
-  ScreenShare,
-  EllipsisVertical,
+  ChevronRight,
   CirclePlay,
   Copy,
-  Pin,
-  PinOff,
-  ArrowDown01,
-  SquarePlus,
-  Unlock,
-  Lock,
-  CircleCheck,
-  Filter,
+  Edit,
+  EllipsisVertical,
   Eye,
   EyeOff,
+  Filter,
+  GripVertical,
+  Lock,
+  Pin,
+  PinOff,
+  ScreenShare,
+  Settings,
   Square,
   SquareCheck,
-  X,
-  GripVertical,
+  SquareMinus,
+  SquarePen,
+  SquarePlus,
+  Trash2,
+  Tv2,
+  Unlock
 } from 'lucide-react';
-import useChannelsTableStore from '~/store/channelsTable';
-import API from '~/lib/api';
-import useWarningsStore from '~/store/warnings';
-import ConfirmationDialog from '~/components/ConfirmationDialog';
-import useSettingsStore from '~/store/settings';
-import useVideoStore from '~/store/useVideoStore';
-import {
-  Popover,
-  PopoverAnchor,
-  PopoverContent,
-  PopoverTrigger,
-} from '~/components/ui/popover';
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-} from '~/components/ui/input-group';
-import { Field, FieldLabel } from '~/components/ui/field';
-import { copyToClipboard } from '~/lib/utils';
-import { Switch } from '~/components/ui/switch';
-import { Label } from '~/components/ui/label';
-import { Separator } from '~/components/ui/separator';
-import useAuthStore from '~/store/auth';
-import { USER_LEVELS } from '~/lib/constants';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import AssignChannelNumbersForm from './AssignChannelNumbersForm';
-import EPGMatchForm from './EPGMatchForm';
-import useChannelsStore from '~/store/channels';
+import ChannelForm from './ChannelForm';
+import ChannelRecordingForm from './ChannelRecordingForm';
+import ChannelsTableOnboarding from './ChannelsTableOnboarding';
 import ChannelTableStreams from './ChannelTableStreams';
+import CreateProfilePopover from './CreateProfilePopover';
 import {
-  EditableTextCell,
-  EditableLogoCell,
   EditableEPGCell,
   EditableGroupCell,
+  EditableLogoCell,
+  EditableTextCell,
 } from './EditableCell';
-import { SmartPagination } from '~/components/SmartPagination';
-import ChannelForm from './ChannelForm';
-import LazyLogo from '~/components/dispatcharr/lazy-logo';
-import { useChannelLogoSelection } from '~/hooks/use-smart-logos';
-import { useDebounce } from '~/lib/utils';
-import useEPGsStore from '~/store/epgs';
-import { List } from 'react-window';
-import { SearchableInput } from '~/components/dispatcharr/searchable-input';
-import ProfileForm from './ProfileForm'
-import CreateProfilePopover from './CreateProfilePopover'
+import EPGMatchForm from './EPGMatchForm';
+import GroupManager from './GroupManager';
+import ProfileForm from './ProfileForm';
+
+// DraggableRow must be defined at module level (not inside the parent component)
+// so that its component type identity is stable across re-renders.  Defining it
+// inside a render function gives it a new reference every render, causing React
+// to unmount and remount it whenever the parent re-renders (e.g. after a
+// virtualizer measurement update), which destroys any focused input.
+const DraggableRow = React.memo(
+  ({ row }: { row: any }) => {
+    // Read directly from the store — no prop needed, stable reference.
+    const isUnlocked = useChannelsTableStore((s) => s.isUnlocked);
+
+    const {
+      attributes,
+      listeners,
+      setNodeRef,
+      transform,
+      transition,
+      isDragging,
+    } = useSortable({
+      id: row.id,
+      disabled: !isUnlocked,
+    });
+
+    const style = {
+      transform: CSS.Transform.toString(transform),
+      transition,
+      opacity: isDragging ? 0.5 : 1,
+    };
+
+    return (
+      <>
+        <TableRow
+          ref={setNodeRef}
+          style={{ ...style, display: 'flex', width: '100%' }}
+          data-state={row.getIsSelected() && 'selected'}
+          className={`bg-background ${
+            row.original.streams && row.original.streams.length > 0
+              ? ''
+              : '!bg-red-900/80'
+          }`}
+        >
+          {isUnlocked && (
+            <TableCell
+              className="w-[24px] p-0"
+              style={{
+                flex: '0 0 24px',
+                cursor: isDragging ? 'grabbing' : 'grab',
+                backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                borderRight: '1px solid rgba(255, 255, 255, 0.1)',
+              }}
+              {...attributes}
+              {...listeners}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  height: '100%',
+                }}
+              >
+                <GripVertical size={16} opacity={0.5} />
+              </div>
+            </TableCell>
+          )}
+          {row.getVisibleCells().map((cell) => (
+            <TableCell
+              key={cell.id}
+              style={{
+                ...(cell.column.getCanResize()
+                  ? {
+                      flex: `1 1 0`,
+                      minWidth: `${cell.column.getSize()}px`,
+                    }
+                  : {
+                      flex: `0 0 ${cell.column.getSize()}px`,
+                      width: `${cell.column.getSize()}px`,
+                    }),
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              }}
+            >
+              {flexRender(cell.column.columnDef.cell, cell.getContext())}
+            </TableCell>
+          ))}
+        </TableRow>
+        {row.getIsExpanded() && (
+          <TableRow
+            style={{ ...style, display: 'flex', width: '100%' }}
+            className="bg-primary/25"
+          >
+            <TableCell
+              style={{ flex: '1 1 100%', width: '100%' }}
+              colSpan={row.getVisibleCells().length + (isUnlocked ? 1 : 0)}
+            >
+              <ChannelTableStreams channel={row.original} isExpanded={true} />
+            </TableCell>
+          </TableRow>
+        )}
+      </>
+    );
+  },
+  (prevProps, nextProps) => {
+    // Return true (skip re-render) when nothing meaningful has changed.
+    return (
+      prevProps.row.id === nextProps.row.id &&
+      prevProps.row.getIsSelected() === nextProps.row.getIsSelected() &&
+      prevProps.row.getIsExpanded() === nextProps.row.getIsExpanded() &&
+      prevProps.row.original.streams.length ===
+        nextProps.row.original.streams.length
+    );
+  }
+);
 
 type Channel = {
   id: number;
@@ -148,6 +251,33 @@ type Channel = {
   logo_id: number | null;
   epg_data_id: number | null;
 };
+
+const ChannelSelectHeader = React.memo(({ table }) => {
+  const channelIds = useChannelsStore((s) => s.channelIds);
+  const selectedChannelIds = useChannelsTableStore((s) => s.selectedChannelIds);
+  const setSelectedChannelIds = useChannelsTableStore(
+    (s) => s.setSelectedChannelIds
+  );
+
+  return (
+    <div className="flex items-center h-full">
+      <Checkbox
+        className="!h-4"
+        checked={
+          (channelIds.length > 0 &&
+            selectedChannelIds.length === channelIds.length) ||
+          (selectedChannelIds.length > 0 && 'indeterminate')
+        }
+        onCheckedChange={(value) => {
+          table.toggleAllPageRowsSelected(!!value);
+          // setLastSelectedIndex(null);
+          setSelectedChannelIds(value ? channelIds : []);
+        }}
+        aria-label="Select all"
+      />
+    </div>
+  );
+});
 
 const ChannelEnabledSwitch = React.memo(
   ({ rowId, selectedProfileId, selectedTableIds }) => {
@@ -204,12 +334,12 @@ const NameColumnHeader = React.memo(({ column }) => {
   }, [column.getFilterValue()]);
 
   return (
-    <div className="space-y-2 flex">
+    <div className="flex space-y-2">
       <Input
+        className="!mb-0"
         placeholder="Name"
         value={inputValue}
         onChange={(e) => setInputValue(e.target.value)}
-        className="h-8"
       />
       <Button
         variant="ghost"
@@ -231,10 +361,12 @@ const NameColumnHeader = React.memo(({ column }) => {
 
 export default function ChannelsTable({ onReady, baseUrl }) {
   const hasSignaledReady = useRef(false);
+  const groupSearchRef = useRef<any>(null);
   const hasFetchedData = useRef(false);
   const fetchVersionRef = useRef(0); // Track fetch version to prevent stale updates
   const lastFetchParamsRef = useRef(null); // Track last fetch params to prevent duplicate requests
   const fetchInProgressRef = useRef(false); // Track if a fetch is currently in progress
+  const tableContainerRef = useRef<HTMLDivElement>(null);
 
   // Drag-and-drop sensors
   const sensors = useSensors(
@@ -285,9 +417,10 @@ export default function ChannelsTable({ onReady, baseUrl }) {
   const [lastSelectedIndex, setLastSelectedIndex] = useState<number | null>(
     null
   );
-  const [headerPinned, setHeaderPinned] = useState<boolean>(false);
+
   const [assignNumbersModalOpen, setAssignNumbersModalOpen] = useState(false);
   const [epgMatchModalOpen, setEpgMatchModalOpen] = useState(false);
+  const [groupManagerOpen, setGroupManagerOpen] = useState(false);
   const [expanded, setExpanded] = useState<ExpandedState>({});
   const [newProfileName, setNewProfileName] = useState<string>('');
   const [editingChannel, setEditingChannel] = useState(null);
@@ -300,89 +433,21 @@ export default function ChannelsTable({ onReady, baseUrl }) {
     mode: null,
     profileId: null,
   });
-  const [profileToDelete, setProfileToDelete] = useState(null)
-  const [confirmDeleteProfileOpen, setConfirmDeleteProfileOpen] = useState(false);
+  const [profileToDelete, setProfileToDelete] = useState(null);
+  const [confirmDeleteProfileOpen, setConfirmDeleteProfileOpen] =
+    useState(false);
   const [deletingProfile, setDeletingProfile] = useState(false);
+  const [channel, setChannel] = useState(null);
+  const [recordingModalOpen, setRecordingModalOpen] = useState(false);
 
   const { ensureLogosLoaded } = useChannelLogoSelection();
 
-  // DraggableRow component for drag and drop with TanStack Table
-  const DraggableRow = ({ row }) => {
-    const {
-      attributes,
-      listeners,
-      setNodeRef,
-      transform,
-      transition,
-      isDragging,
-    } = useSortable({
-      id: row.id,
-      disabled: !isUnlocked,
-    });
-
-    const style = {
-      transform: CSS.Transform.toString(transform),
-      transition,
-      opacity: isDragging ? 0.5 : 1,
-    };
-
-    return (
-      <>
-        <TableRow
-          ref={setNodeRef}
-          style={style}
-          data-state={row.getIsSelected() && 'selected'}
-          className={`${row.original.streams && row.original.streams.length > 0 ? '' : 'bg-red-900/30'}`}
-        >
-          {isUnlocked && (
-            <TableCell
-              style={{
-                width: '24px',
-                padding: 0,
-                cursor: isDragging ? 'grabbing' : 'grab',
-                backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                borderRight: '1px solid rgba(255, 255, 255, 0.1)',
-              }}
-              {...attributes}
-              {...listeners}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  height: '100%',
-                }}
-              >
-                <GripVertical size={16} opacity={0.5} />
-              </div>
-            </TableCell>
-          )}
-          {row.getVisibleCells().map((cell) => (
-            <TableCell
-              key={cell.id}
-              style={{
-                width: `${cell.column.getSize()}px`,
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-              }}
-            >
-              {flexRender(cell.column.columnDef.cell, cell.getContext())}
-            </TableCell>
-          ))}
-        </TableRow>
-        {row.getIsExpanded() && (
-          <TableRow style={style} className="bg-primary/25">
-            <TableCell
-              colSpan={row.getVisibleCells().length + (isUnlocked ? 1 : 0)}
-            >
-              <ChannelTableStreams channel={row.original} isExpanded={true} />
-            </TableCell>
-          </TableRow>
-        )}
-      </>
-    );
-  };
+  // @TODO-v2: implement table size
+  const {
+    headerPinned,
+    setHeaderPinned,
+    // tableSize, setTableSize
+  } = useTablePreferences();
 
   const [hdhrUrl, setHDHRUrl] = useState(`${baseUrl}/hdhr`);
   const [epgUrl, setEPGUrl] = useState(`${baseUrl}/output/epg`);
@@ -426,6 +491,8 @@ export default function ChannelsTable({ onReady, baseUrl }) {
    * Functions
    */
   const fetchData = useCallback(async () => {
+    console.log(columnFilters);
+
     // Build params first to check for duplicates
     const params = new URLSearchParams();
     params.append('page', pagination.pageIndex + 1);
@@ -677,6 +744,12 @@ export default function ChannelsTable({ onReady, baseUrl }) {
     }
   };
 
+  const createRecording = (channel) => {
+    console.log(`Recording channel ID: ${channel.id}`);
+    setChannel(channel);
+    setRecordingModalOpen(true);
+  };
+
   const getChannelURL = (channel) => {
     // Make sure we're using the channel UUID consistently
     if (!channel || !channel.uuid) {
@@ -770,10 +843,10 @@ export default function ChannelsTable({ onReady, baseUrl }) {
       return;
     }
 
-    setProfileModalState({opened: true, mode, profileId})
+    setProfileModalState({ opened: true, mode, profileId });
   };
 
-    const deleteProfile = async (id) => {
+  const deleteProfile = async (id) => {
     // Get profile details for the confirmation dialog
     const profileObj = profiles[id];
     setProfileToDelete(profileObj);
@@ -800,41 +873,30 @@ export default function ChannelsTable({ onReady, baseUrl }) {
     () => [
       {
         id: 'expand',
-        size: 20,
+        size: 30,
         enableResizing: false,
         cell: ({ row }) => (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-4 w-4 p-0"
-            onClick={() => row.toggleExpanded()}
-          >
-            {row.getIsExpanded() ? (
-              <ChevronDown className="h-4 w-4" />
-            ) : (
-              <ChevronRight className="h-4 w-4" />
-            )}
-          </Button>
+          <div className="flex h-full items-center">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-4 w-4 p-0"
+              onClick={() => row.toggleExpanded()}
+            >
+              {row.getIsExpanded() ? (
+                <ChevronDown className="h-4 w-4" />
+              ) : (
+                <ChevronRight className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
         ),
       },
       {
         id: 'select',
-        size: 10,
-        header: ({ table }) => (
-          <Checkbox
-            className="!h-4"
-            checked={
-              selectedChannelIds.length === channelIds.length ||
-              (selectedChannelIds.length > 0 && 'indeterminate')
-            }
-            onCheckedChange={(value) => {
-              table.toggleAllPageRowsSelected(!!value);
-              setLastSelectedIndex(null);
-              setSelectedChannelIds(value ? channelIds : []);
-            }}
-            aria-label="Select all"
-          />
-        ),
+        size: 30,
+        enableResizing: false,
+        header: ({ table }) => <ChannelSelectHeader table={table} />,
         cell: ({ row, table }) => (
           <Checkbox
             className="!h-4"
@@ -876,23 +938,25 @@ export default function ChannelsTable({ onReady, baseUrl }) {
       },
       {
         id: 'enabled',
-        size: 25,
+        size: 35,
+        enableResizing: false,
         enableHiding: false,
         enableSorting: false,
-        header: ({ table }) => {
-          <Switch size="sm" />;
-        },
+        header: ({ table }) => {},
         cell: ({ row, table }) => (
-          <ChannelEnabledSwitch
-            rowId={row.original.id}
-            selectedProfileId={selectedProfileId}
-            selectedTableIds={selectedChannelIds}
-          />
+          <div className="flex h-full items-center">
+            <ChannelEnabledSwitch
+              rowId={row.original.id}
+              selectedProfileId={selectedProfileId}
+              selectedTableIds={selectedChannelIds}
+            />
+          </div>
         ),
       },
       {
         accessorKey: 'channel_number',
-        size: 40,
+        size: 50,
+        enableResizing: false,
         header: ({ column }) => {
           return (
             <div className="flex items-center justify-end space-y-2">
@@ -917,7 +981,7 @@ export default function ChannelsTable({ onReady, baseUrl }) {
           );
         },
         cell: ({ row }) => (
-          <div className="text-right overflow-hidden text-ellipsis whitespace-nowrap">
+          <div className="text-right overflow-hidden text-ellipsis whitespace-nowrap content-center h-full">
             {row.getValue('channel_number')}
           </div>
         ),
@@ -927,7 +991,7 @@ export default function ChannelsTable({ onReady, baseUrl }) {
         enableResizing: true,
         header: ({ column }) => <NameColumnHeader column={column} />,
         cell: (props) => (
-          <div className="font-medium overflow-hidden text-ellipsis whitespace-nowrap">
+          <div className="font-medium overflow-hidden text-ellipsis whitespace-nowrap h-full content-center">
             <EditableTextCell {...props} />
           </div>
         ),
@@ -938,11 +1002,12 @@ export default function ChannelsTable({ onReady, baseUrl }) {
         size: 80,
         enableResizing: true,
         enableSorting: false,
-         header: ({ column }) => {
+        header: ({ column }) => {
           return (
             <div className="space-y-2 flex">
               <div className="flex items-center justify-center gap-2 pr-3">
                 <SearchableInput
+                  className="h-6"
                   placeholder="EPG"
                   options={Object.values(epgs).map((epg) => ({
                     label: epg.name,
@@ -950,20 +1015,11 @@ export default function ChannelsTable({ onReady, baseUrl }) {
                   }))}
                   allowMultiple={true}
                   onSelect={(values) => {
-                    console.log(values);
                     column.setFilterValue(values.map((v) => v.label).join(','));
                   }}
                   autoFocus={false}
+                  clearable={true}
                 />
-                {column.getFilterValue() && (
-                  <Badge
-                    size="sm"
-                    className="p-1 h-5 bg-foreground/50"
-                    onClick={() => column.setFilterValue('')}
-                  >
-                    {column.getFilterValue().split(',').length} <X />
-                  </Badge>
-                )}
               </div>
             </div>
           );
@@ -992,27 +1048,21 @@ export default function ChannelsTable({ onReady, baseUrl }) {
             <div className="space-y-2 flex">
               <div className="flex items-center justify-center gap-2 pr-3">
                 <SearchableInput
+                  className="h-6"
                   placeholder="Groups"
                   options={Object.values(channelGroups).map((group) => ({
                     label: group.name,
                     value: group.id,
                   }))}
                   allowMultiple={true}
+                  ref={groupSearchRef}
                   onSelect={(values) => {
                     console.log(values);
                     column.setFilterValue(values.map((v) => v.label).join(','));
                   }}
                   autoFocus={false}
+                  clearable={true}
                 />
-                {column.getFilterValue() && (
-                  <Badge
-                    size="sm"
-                    className="p-1 h-5 bg-foreground/50"
-                    onClick={() => column.setFilterValue('')}
-                  >
-                    {column.getFilterValue().split(',').length} <X />
-                  </Badge>
-                )}
               </div>
             </div>
           );
@@ -1029,8 +1079,6 @@ export default function ChannelsTable({ onReady, baseUrl }) {
         },
         header: '',
         size: 75,
-        minSize: 50,
-        maxSize: 120,
         enableResizing: false,
         cell: (props) => (
           <EditableLogoCell
@@ -1042,44 +1090,41 @@ export default function ChannelsTable({ onReady, baseUrl }) {
       },
       {
         id: 'actions',
-        size: 70,
+        size: 90,
         enableResizing: false,
         cell: ({ row }) => {
           return (
-            <div className="flex">
-              <Button
+            <div className="flex justify-between">
+              <div
+                role="button"
                 variant="ghost"
-                size="sm"
                 className="text-yellow-500 dark:text-yellow-300 h-4 w-4 p-0 cursor-pointer"
                 onClick={() => editChannel(row.original)}
               >
-                <Edit />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
+                <Edit size={18} />
+              </div>
+              <div
+                role="button"
                 className="text-red-500 dark:text-red-500 h-4 w-4 p-0 cursor-pointer"
                 onClick={() => deleteChannel(row.original.id)}
               >
-                <Trash2 />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-green-600 dark:text-green-500 h-4 w-4 p-0 cursor-pointer"
+                <Trash2 size={18} />
+              </div>
+              <div
+                role="button"
+                className="text-[var(--success)] h-4 w-4 p-0 cursor-pointer"
                 onClick={() => handleWatchStream(row.original)}
               >
-                <CirclePlay />
-              </Button>
+                <CirclePlay size={18} />
+              </div>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
+                  <div
+                    role="button"
                     className="text-blue-500 h-4 w-4 p-0 cursor-pointer"
                   >
-                    <EllipsisVertical />
-                  </Button>
+                    <EllipsisVertical size={18} />
+                  </div>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
                   <DropdownMenuItem
@@ -1094,6 +1139,13 @@ export default function ChannelsTable({ onReady, baseUrl }) {
                   >
                     Copy URL
                   </DropdownMenuItem>
+
+                  <DropdownMenuItem
+                    className="cursor-pointer"
+                    onClick={() => createRecording(row.original)}
+                  >
+                    Record
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -1101,7 +1153,7 @@ export default function ChannelsTable({ onReady, baseUrl }) {
         },
       },
     ],
-    [selectedProfileId, channelGroups, tvgsById, epgs, selectedChannelIds]
+    [selectedProfileId, channelGroups, tvgsById, epgs]
   );
 
   const table = useReactTable({
@@ -1154,6 +1206,41 @@ export default function ChannelsTable({ onReady, baseUrl }) {
     manualFiltering: true,
   });
 
+  const rows = table.getRowModel().rows;
+
+  const rowVirtualizer = useVirtualizer({
+    count: rows.length,
+    getScrollElement: () => tableContainerRef.current,
+    estimateSize: useCallback(
+      (index: number) => {
+        const row = rows[index];
+        // Provide a larger estimate for expanded rows so initial placement is closer
+        return row?.getIsExpanded() ? 300 : 41;
+      },
+      [rows]
+    ),
+    // Use ResizeObserver-based measurement for accurate dynamic heights.
+    // Firefox has a known issue with getBoundingClientRect inside tables, so we
+    // fall back to estimate-only there.
+    measureElement:
+      typeof window !== 'undefined' &&
+      navigator.userAgent.indexOf('Firefox') === -1
+        ? (element) => element?.getBoundingClientRect().height
+        : undefined,
+    overscan: 25,
+  });
+
+  const virtualItems = rowVirtualizer.getVirtualItems();
+  // Padding rows account for the height of off-screen items above and below
+  // the rendered window without requiring absolute positioning.
+  const paddingTop =
+    virtualItems.length > 0 ? (virtualItems[0]?.start ?? 0) : 0;
+  const paddingBottom =
+    virtualItems.length > 0
+      ? rowVirtualizer.getTotalSize() -
+        (virtualItems[virtualItems.length - 1]?.end ?? 0)
+      : 0;
+
   return (
     <div className="flex h-full flex-col gap-2">
       {/* Header */}
@@ -1174,9 +1261,13 @@ export default function ChannelsTable({ onReady, baseUrl }) {
                 <InputGroup>
                   <InputGroupInput placeholder={hdhrUrl} disabled />
                   <InputGroupAddon align="inline-end">
-                    <Button variant="ghost" onClick={copyHDHRUrl}>
-                      <Copy />
-                    </Button>
+                    <div
+                      role="button"
+                      className="cursor-pointer"
+                      onClick={copyHDHRUrl}
+                    >
+                      <Copy size={16} />
+                    </div>
                   </InputGroupAddon>
                 </InputGroup>
               </PopoverContent>
@@ -1201,9 +1292,13 @@ export default function ChannelsTable({ onReady, baseUrl }) {
                       disabled
                     />
                     <InputGroupAddon align="inline-end">
-                      <Button variant="ghost" onClick={copyM3UUrl}>
-                        <Copy />
-                      </Button>
+                      <div
+                        role="button"
+                        className="cursor-pointer"
+                        onClick={copyM3UUrl}
+                      >
+                        <Copy size={16} />
+                      </div>
                     </InputGroupAddon>
                   </InputGroup>
                 </Field>
@@ -1291,9 +1386,13 @@ export default function ChannelsTable({ onReady, baseUrl }) {
                       disabled
                     />
                     <InputGroupAddon align="inline-end">
-                      <Button variant="ghost" onClick={copyEPGUrl}>
-                        <Copy />
-                      </Button>
+                      <div
+                        role="button"
+                        className="cursor-pointer"
+                        onClick={copyEPGUrl}
+                      >
+                        <Copy size={16} />
+                      </div>
                     </InputGroupAddon>
                   </InputGroup>
                 </Field>
@@ -1378,6 +1477,7 @@ export default function ChannelsTable({ onReady, baseUrl }) {
         <div className="flex items-center gap-1">
           <SearchableInput
             className="h-8"
+            autoFocus={false}
             placeholder={profiles[selectedProfileId]?.name}
             options={Object.values(profiles).map((profile) => ({
               label: profile.name,
@@ -1399,31 +1499,33 @@ export default function ChannelsTable({ onReady, baseUrl }) {
                       {option.label}
                     </div>
                     {option.value !== '0' && (
-<div className="flex justify-end gap-1">
-                      <div
-                        role="button"
-                        className="text-yellow-500 cursor-po inter"
-                        onClick={() => onEditProfile('edit', option.value)}
-                      >
-                        <SquarePen size={16} />
-                      </div>
+                      <div className="flex justify-end gap-1">
+                        <div
+                          role="button"
+                          className="text-yellow-500 cursor-po inter"
+                          onClick={() => onEditProfile('edit', option.value)}
+                        >
+                          <SquarePen size={16} />
+                        </div>
 
-                      <div
-                        role="button"
-                        className="text-green-600 dark:text-green-500 cursor-pointer"
-                        onClick={() => onEditProfile('duplicate', option.value)}
-                      >
-                        <Copy size={16} />
-                      </div>
+                        <div
+                          role="button"
+                          className="text-[var(--success)] cursor-pointer"
+                          onClick={() =>
+                            onEditProfile('duplicate', option.value)
+                          }
+                        >
+                          <Copy size={16} />
+                        </div>
 
-                      <div
-                        role="button"
-                        className="text-red-500 cursor-pointer"
-                        onClick={() => deleteProfile(option.value)}
-                      >
-                        <SquareMinus size={16} />
+                        <div
+                          role="button"
+                          className="text-red-500 cursor-pointer"
+                          onClick={() => deleteProfile(option.value)}
+                        >
+                          <SquareMinus size={16} />
+                        </div>
                       </div>
-                    </div>
                     )}
                   </div>
                 </div>
@@ -1431,7 +1533,7 @@ export default function ChannelsTable({ onReady, baseUrl }) {
             }}
           />
 
-          <div className="cursor-pointer text-green-500">
+          <div className="cursor-pointer text-[var(--success)]">
             <CreateProfilePopover />
           </div>
         </div>
@@ -1447,7 +1549,7 @@ export default function ChannelsTable({ onReady, baseUrl }) {
                 <Filter />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start">
+            <DropdownMenuContent align="start" className="w-45">
               <DropdownMenuItem
                 className="cursor-pointer"
                 onClick={() => setShowDisabled(!showDisabled)}
@@ -1482,24 +1584,26 @@ export default function ChannelsTable({ onReady, baseUrl }) {
             <SquarePen className="h-4 w-4 rounded-sm" />
             Edit
           </Button>
+
           <Button
-            variant="outline"
+            variant="destructive"
             size="sm"
             className="cursor-pointer"
             onClick={deleteChannels}
             disabled={selectedChannelIds.length === 0}
           >
-            <SquareMinus className={`h-4 w-4`} />
+            <SquareMinus />
             Delete
           </Button>
+
           <Button
             variant="ghost"
             size="sm"
-            className="cursor-pointer rounded-sm border-1 border-green-500 bg-green-200 dark:bg-green-950"
+            className={`cursor-pointer ${authUser.user_level != USER_LEVELS.ADMIN ? 'bg-gray-200 dark:bg-gray-700 cursor-not-allowed' : 'border-[var(--success)] bg-green-200 dark:bg-green-950'}`}
             onClick={() => editChannel(null, { forceAdd: true })}
             disabled={authUser.user_level != USER_LEVELS.ADMIN}
           >
-            <Plus />
+            <SquarePlus />
             Add
           </Button>
 
@@ -1513,14 +1617,14 @@ export default function ChannelsTable({ onReady, baseUrl }) {
                 <EllipsisVertical />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="end" className="min-w-40">
               <DropdownMenuItem onClick={() => setHeaderPinned(!headerPinned)}>
                 {headerPinned ? (
                   <Pin className="mr-2 h-4 w-4" />
                 ) : (
                   <PinOff className="mr-2 h-4 w-4" />
                 )}
-                {headerPinned ? 'Unpin Header' : 'Pin Header'}
+                {headerPinned ? 'Unpin Headers' : 'Pin Headers'}
               </DropdownMenuItem>
 
               <DropdownMenuItem onClick={() => setIsUnlocked(!isUnlocked)}>
@@ -1553,182 +1657,323 @@ export default function ChannelsTable({ onReady, baseUrl }) {
                   ? `Auto-Match (${selectedChannelIds.length} selected)`
                   : 'Auto-Match EPG'}
               </DropdownMenuItem>
+
+              <DropdownMenuItem
+                disabled={authUser.user_level != USER_LEVELS.ADMIN}
+                onClick={() => setGroupManagerOpen(true)}
+              >
+                <Settings className="mr-2 h-4 w-4" />
+                Edit Groups
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
       </div>
-      <div className="relative scrollbar-overlay min-h-0 flex-1 overflow-auto rounded-md border">
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleDragEnd}
-        >
-          <SortableContext
-            items={table.getRowModel().rows.map((row) => row.id)}
-            strategy={verticalListSortingStrategy}
-          >
-            <table
-              style={{
-                minWidth: '100%',
-                width: `${table.getTotalSize() + (isUnlocked ? 24 : 0)}px`,
-                tableLayout: 'fixed',
-              }}
-              className={`${
-                tableSize === 'compact'
-                  ? 'table-compact'
-                  : tableSize === 'large'
-                    ? 'table-large'
-                    : ''
-              }`}
-            >
-              <TableHeader
-                className={`top-0 z-10 !bg-background ${headerPinned ? 'sticky' : ''}`}
-              >
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <TableRow key={headerGroup.id}>
-                    {isUnlocked && (
-                      <TableHead
-                        style={{
-                          width: '24px',
-                          padding: 0,
-                        }}
-                      />
-                    )}
-                    {headerGroup.headers.map((header) => (
-                      <TableHead
-                        key={header.id}
-                        style={{
-                          width: `${header.getSize()}px`,
-                          position: 'relative',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                        }}
-                      >
-                        {header.isPlaceholder
-                          ? null
-                          : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext()
-                            )}
-                        {header.column.getCanResize() && (
-                          <div
-                            onMouseDown={header.getResizeHandler()}
-                            onTouchStart={header.getResizeHandler()}
-                            // className={`resizer ${
-                            //   header.column.getIsResizing() ? 'isResizing' : ''
-                            // }`}
-                            style={{
-                              position: 'absolute',
-                              right: 0,
-                              top: 0,
-                              height: '100%',
-                              width: '5px',
-                              background: header.column.getIsResizing()
-                                ? 'rgba(59, 130, 246, 0.5)'
-                                : 'rgba(0, 0, 0, 0.1)',
-                              cursor: 'col-resize',
-                              userSelect: 'none',
-                              touchAction: 'none',
-                            }}
-                            onMouseEnter={(e) => {
-                              if (!header.column.getIsResizing()) {
-                                e.currentTarget.style.background =
-                                  'rgba(59, 130, 246, 0.3)';
-                              }
-                            }}
-                            onMouseLeave={(e) => {
-                              if (!header.column.getIsResizing()) {
-                                e.currentTarget.style.background =
-                                  'rgba(0, 0, 0, 0.1)';
-                              }
-                            }}
-                          />
-                        )}
-                      </TableHead>
-                    ))}
-                  </TableRow>
-                ))}
-              </TableHeader>
-              <TableBody>
-                {isLoading ? (
-                  Array.from({ length: pagination.pageSize }).map((_, i) => (
-                    <TableRow key={i}>
-                      {isUnlocked && (
-                        <TableCell
-                          style={{
-                            width: '24px',
-                            padding: 0,
-                          }}
-                        />
-                      )}
-                      {table.getAllColumns().map((column) => (
-                        <TableCell
-                          key={column.id}
-                          style={{
-                            width: `${column.getSize()}px`,
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                          }}
-                        >
-                          <Skeleton className="my-1 h-4 w-full" />
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  ))
-                ) : table.getRowModel().rows?.length ? (
-                  table
-                    .getRowModel()
-                    .rows.map((row) => <DraggableRow key={row.id} row={row} />)
-                ) : (
-                  <TableRow>
-                    <TableCell
-                      colSpan={columns.length + (isUnlocked ? 1 : 0)}
-                      className="h-24 text-center"
-                    >
-                      No channels found
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </table>
-          </SortableContext>
-        </DndContext>
-      </div>
 
-      {/* Pagination */}
-      <div className="flex items-center justify-center">
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">Page Size</span>
-          <Select
-            value={String(pagination.pageSize)}
-            onValueChange={(value) => {
-              setPagination({
-                ...pagination,
-                pageSize: Number(value),
-                pageIndex: 0,
-              });
-            }}
-          >
-            <SelectTrigger className="h-8 w-[70px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {[25, 50, 100].map((size) => (
-                <SelectItem key={size} value={String(size)}>
-                  {size}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      {channelIds.length === 0 ? (
+        Object.keys(channels).length === 0 && (
+          <ChannelsTableOnboarding editChannel={editChannel} />
+        )
+      ) : (
+        <div className="flex flex-col flex-1 min-h-0 gap-2">
+          {/* Outer wrapper is position:relative so the skeleton layer and scroll
+              container can both be position:absolute and fill it exactly. */}
+          <div className="relative flex-1 min-h-0 rounded-md border">
+            {/* Skeleton background — always mounted when data is present.
+                It fills the visible viewport area (overflow:hidden clips it).
+                Virtual rows rendered by TanStack Virtual sit above it via
+                z-index and mask it with their opaque bg-background.
+                The transparent padding-spacer <tbody> elements reveal the
+                skeleton below, turning the previous "black gap" into a pulsing
+                skeleton during fast scroll. No scroll-event handlers; pure CSS. */}
+            {!isLoading && rows.length > 0 && (
+              <div
+                aria-hidden
+                className="pointer-events-none absolute inset-0 z-0 overflow-hidden rounded-md"
+              >
+                {Array.from({ length: rows.length }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="flex items-center gap-3 border-b border-border px-3"
+                    style={{ height: '28px' }}
+                  >
+                    {/* Mirror the rough column layout for a realistic skeleton */}
+                    <Skeleton className="h-3.5 w-4 shrink-0 opacity-30" />
+                    <Skeleton className="h-3.5 w-4 shrink-0 opacity-30" />
+                    <Skeleton className="h-3.5 w-8 shrink-0 opacity-30" />
+                    <Skeleton className="h-3.5 flex-1 opacity-30" />
+                    <Skeleton className="h-3.5 w-16 shrink-0 opacity-30" />
+                    <Skeleton className="h-3.5 w-16 shrink-0 opacity-30" />
+                    <Skeleton className="h-7 w-12 shrink-0 rounded opacity-30" />
+                    <Skeleton className="h-3.5 w-16 shrink-0 opacity-30" />
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div
+              ref={tableContainerRef}
+              className="scrollbar-overlay absolute inset-0 overflow-auto rounded-md"
+            >
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={rows.map((row) => row.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <table
+                    style={{
+                      minWidth: '100%',
+                      width: '100%',
+                      display: 'table',
+                    }}
+                    className={`table-compact ${
+                      tableSize === 'compact'
+                        ? 'table-compact'
+                        : tableSize === 'large'
+                          ? 'table-large'
+                          : ''
+                    }`}
+                  >
+                    <TableHeader
+                      className={`top-0 z-10 !bg-background ${headerPinned ? 'sticky' : ''}`}
+                    >
+                      {table.getHeaderGroups().map((headerGroup) => (
+                        <TableRow
+                          key={headerGroup.id}
+                          style={{ display: 'flex', width: '100%' }}
+                        >
+                          {isUnlocked && (
+                            <TableHead
+                              style={{
+                                flex: '0 0 24px',
+                                width: '24px',
+                                padding: 0,
+                              }}
+                            />
+                          )}
+                          {headerGroup.headers.map((header) => (
+                            <TableHead
+                              className="content-center"
+                              key={header.id}
+                              style={{
+                                ...(header.column.getCanResize()
+                                  ? {
+                                      flex: `1 1 0`,
+                                      minWidth: `${header.getSize()}px`,
+                                    }
+                                  : {
+                                      flex: `0 0 ${header.getSize()}px`,
+                                      width: `${header.getSize()}px`,
+                                    }),
+                                position: 'relative',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                              }}
+                            >
+                              {header.isPlaceholder
+                                ? null
+                                : flexRender(
+                                    header.column.columnDef.header,
+                                    header.getContext()
+                                  )}
+                              {header.column.getCanResize() && (
+                                <div
+                                  onMouseDown={header.getResizeHandler()}
+                                  onTouchStart={header.getResizeHandler()}
+                                  style={{
+                                    position: 'absolute',
+                                    right: 0,
+                                    top: 0,
+                                    height: '100%',
+                                    width: '5px',
+                                    background: header.column.getIsResizing()
+                                      ? 'rgba(59, 130, 246, 0.5)'
+                                      : 'var(--background)',
+                                    cursor: 'col-resize',
+                                    userSelect: 'none',
+                                    touchAction: 'none',
+                                  }}
+                                  onMouseEnter={(e) => {
+                                    if (!header.column.getIsResizing()) {
+                                      e.currentTarget.style.background =
+                                        'rgba(59, 130, 246, 0.3)';
+                                    }
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    if (!header.column.getIsResizing()) {
+                                      e.currentTarget.style.background =
+                                        'var(--background)';
+                                    }
+                                  }}
+                                />
+                              )}
+                            </TableHead>
+                          ))}
+                        </TableRow>
+                      ))}
+                    </TableHeader>
+
+                    {/* Loading skeleton — rendered as a normal tbody, bypasses
+                      virtualization since we just showplaceholders. */}
+                    {isLoading && (
+                      <TableBody>
+                        {Array.from({ length: pagination.pageSize }).map(
+                          (_, i) => (
+                            <TableRow
+                              key={i}
+                              style={{ display: 'flex', width: '100%' }}
+                            >
+                              {isUnlocked && (
+                                <TableCell
+                                  style={{
+                                    flex: '0 0 24px',
+                                    width: '24px',
+                                    padding: 0,
+                                  }}
+                                />
+                              )}
+                              {table.getAllColumns().map((column) => (
+                                <TableCell
+                                  key={column.id}
+                                  style={{
+                                    ...(column.getCanResize()
+                                      ? {
+                                          flex: `1 1 0`,
+                                          minWidth: `${column.getSize()}px`,
+                                        }
+                                      : {
+                                          flex: `0 0 ${column.getSize()}px`,
+                                          width: `${column.getSize()}px`,
+                                        }),
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                  }}
+                                >
+                                  <Skeleton className="my-1 h-4 w-full" />
+                                </TableCell>
+                              ))}
+                            </TableRow>
+                          )
+                        )}
+                      </TableBody>
+                    )}
+
+                    {/* Empty state */}
+                    {!isLoading && rows.length === 0 && (
+                      <TableBody>
+                        <TableRow style={{ display: 'flex', width: '100%' }}>
+                          <TableCell
+                            style={{ flex: '1 1 100%', width: '100%' }}
+                            colSpan={columns.length + (isUnlocked ? 1 : 0)}
+                            className="h-24 text-center"
+                          >
+                            No channels found
+                          </TableCell>
+                        </TableRow>
+                      </TableBody>
+                    )}
+
+                    {/* Virtualized rows.
+                      Each channel row (plus its optional expanded sub-row) is
+                      wrapped in its own <tbody>.  A <table> may contain multiple
+                      <tbody> elements — this is valid HTML and lets the
+                      ResizeObserver measure the combined height of the main row
+                      AND the (variable-height) expanded row as a single unit,
+                      which is exactly what the virtualizer needs for dynamic
+                      sizing.  DnD is unaffected: SortableContext holds all IDs
+                      and useSortable runs inside each rendered DraggableRow. */}
+                    {!isLoading && rows.length > 0 && (
+                      <>
+                        {paddingTop > 0 && (
+                          <tbody aria-hidden>
+                            <tr>
+                              <td
+                                style={{
+                                  height: `${paddingTop}px`,
+                                  padding: 0,
+                                }}
+                              />
+                            </tr>
+                          </tbody>
+                        )}
+
+                        {virtualItems.map((virtualItem) => {
+                          const row = rows[virtualItem.index];
+                          return (
+                            <tbody
+                              key={row.id}
+                              // data-index is read by measureElement to map back
+                              // to the correct virtualizer entry.
+                              data-index={virtualItem.index}
+                              ref={(el) => rowVirtualizer.measureElement(el)}
+                            >
+                              <DraggableRow row={row} />
+                            </tbody>
+                          );
+                        })}
+
+                        {paddingBottom > 0 && (
+                          <tbody aria-hidden>
+                            <tr>
+                              <td
+                                style={{
+                                  height: `${paddingBottom}px`,
+                                  padding: 0,
+                                }}
+                              />
+                            </tr>
+                          </tbody>
+                        )}
+                      </>
+                    )}
+                  </table>
+                </SortableContext>
+              </DndContext>
+            </div>
+            {/* end scrollable container */}
+          </div>
+          {/* end relative skeleton wrapper */}
+
+          {/* Pagination */}
+          <div className="flex items-center justify-center">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Page Size</span>
+              <Select
+                value={String(pagination.pageSize)}
+                onValueChange={(value) => {
+                  setPagination({
+                    ...pagination,
+                    pageSize: Number(value),
+                    pageIndex: 0,
+                  });
+                }}
+              >
+                <SelectTrigger className="h-8 w-[75px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {[25, 50, 100, 250].map((size) => (
+                    <SelectItem key={size} value={String(size)}>
+                      {size}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <SmartPagination
+              currentPage={pagination.pageIndex + 1}
+              totalPages={pageCount}
+              onPageChange={(page) =>
+                setPagination({ ...pagination, pageIndex: page - 1 })
+              }
+            />
+          </div>
         </div>
-        <SmartPagination
-          currentPage={pagination.pageIndex + 1}
-          totalPages={pageCount}
-          onPageChange={(page) =>
-            setPagination({ ...pagination, pageIndex: page - 1 })
-          }
-        />
-      </div>
+      )}
 
       <ChannelForm
         channel={editingChannel}
@@ -1750,7 +1995,9 @@ export default function ChannelsTable({ onReady, baseUrl }) {
 
       <ProfileForm
         isOpen={profileModalState.opened}
-        onClose={() => setProfileModalState({ ...profileModalState, opened: false })}
+        onClose={() =>
+          setProfileModalState({ ...profileModalState, opened: false })
+        }
         mode={profileModalState.mode}
         profile={
           profileModalState.profileId
@@ -1760,7 +2007,7 @@ export default function ChannelsTable({ onReady, baseUrl }) {
       />
 
       <ConfirmationDialog
-        open={confirmDeleteOpen}
+        opened={confirmDeleteOpen}
         onOpenChange={setConfirmDeleteOpen}
         onConfirm={() =>
           isBulkDelete
@@ -1792,8 +2039,8 @@ This action cannot be undone.`}
         size="md"
       />
 
-       <ConfirmationDialog
-        open={confirmDeleteProfileOpen}
+      <ConfirmationDialog
+        opened={confirmDeleteProfileOpen}
         onClose={() => setConfirmDeleteProfileOpen(false)}
         onConfirm={() => executeDeleteProfile(profileToDelete?.id)}
         loading={deletingProfile}
@@ -1816,6 +2063,17 @@ This action cannot be undone.`}
         actionKey="delete-profile"
         onSuppressChange={suppressWarning}
         size="md"
+      />
+
+      <ChannelRecordingForm
+        channel={channel}
+        isOpen={recordingModalOpen}
+        onClose={() => setRecordingModalOpen(false)}
+      />
+
+      <GroupManager
+        isOpen={groupManagerOpen}
+        onClose={() => setGroupManagerOpen(false)}
       />
     </div>
   );

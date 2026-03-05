@@ -1,62 +1,55 @@
-import { useEffect, useState } from 'react';
-import { Link, Outlet, useLocation, useNavigate } from 'react-router';
-import {
-  Home,
-  LayoutDashboard,
-  Users,
-  Settings,
-  Info,
-  Moon,
-  Sun,
-  ChevronRight,
-  Tv,
-  Film,
-} from 'lucide-react';
-import { Button } from '~/components/ui/button';
-import {
-  Sidebar,
-  SidebarProvider,
-  SidebarContent,
-  SidebarHeader,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubItem,
-  SidebarMenuSubButton,
-  SidebarFooter,
-  SidebarTrigger,
-  SidebarRail,
-  useSidebar,
-} from '~/components/ui/sidebar';
+import { Button } from '@/components/ui/button';
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from '~/components/ui/collapsible';
+} from '@/components/ui/collapsible';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '~/components/ui/dropdown-menu';
-import { useTheme } from '~/hooks/use-theme';
-import { checkAuth } from '~/lib/auth-helpers';
-import { Input } from '~/components/ui/input';
+} from '@/components/ui/dropdown-menu';
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupInput,
-} from '~/components/ui/input-group';
-import useAuthStore from '~/store/auth';
-import useSettingsStore from '~/store/settings';
-import useChannelsStore from '~/store/channels';
-import { Copy } from 'lucide-react';
+} from '@/components/ui/input-group';
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
+  SidebarProvider,
+  SidebarRail,
+  useSidebar
+} from '@/components/ui/sidebar';
+import { useTheme } from '@/hooks/use-theme';
+import { WebsocketProvider } from '@/hooks/use-websocket';
+import { checkAuth } from '@/lib/auth-helpers';
+import { copyToClipboard } from '@/lib/utils';
+import useAuthStore from '@/store/auth';
+import useChannelsStore from '@/store/channels';
+import useSettingsStore from '@/store/settings';
+import {
+  ChartLine,
+  ChevronRight,
+  Copy,
+  ListOrdered,
+  Moon,
+  Sun
+} from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Link, Outlet, useLocation, useNavigate } from 'react-router';
 import FloatingVideo from './FloatingVideo';
-import { WebsocketProvider } from '~/hooks/use-websocket';
 
 type NavItem = {
   title: string;
@@ -64,33 +57,6 @@ type NavItem = {
   url?: string;
   items?: { title: string; url: string }[];
 };
-
-const navItems: NavItem[] = [
-  { title: 'Home', icon: Home, url: '/' },
-  { title: 'Dashboard', icon: LayoutDashboard, url: '/dashboard' },
-  {
-    title: 'Content',
-    icon: Tv,
-    items: [
-      { title: 'Channels', url: '/channels' },
-      { title: 'VOD', url: '/vod' },
-      { title: 'Series', url: '/series' },
-      { title: 'EPG', url: '/epg' },
-    ],
-  },
-  {
-    title: 'Media',
-    icon: Film,
-    items: [
-      { title: 'Movies', url: '/movies' },
-      { title: 'TV Shows', url: '/tv-shows' },
-      { title: 'Live TV', url: '/live-tv' },
-    ],
-  },
-  { title: 'Users', icon: Users, url: '/users' },
-  { title: 'Settings', icon: Settings, url: '/settings' },
-  { title: 'About', icon: Info, url: '/about' },
-];
 
 export default function AppLayout() {
   const navigate = useNavigate();
@@ -129,7 +95,7 @@ export default function AppLayout() {
       <SidebarProvider
         style={
           {
-            '--sidebar-width': '18rem',
+            '--sidebar-width': '15rem',
             '--sidebar-width-icon': '3.3rem',
           } as React.CSSProperties
         }
@@ -152,6 +118,21 @@ function AppLayoutContent() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const authUser = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
+
+  const navItems: NavItem[] = [
+  { title: `Channels (${channelIds.length})`, icon: ListOrdered, url: '/' },
+  // {
+  //   title: 'Content',
+  //   icon: Tv,
+  //   items: [
+  //     { title: 'Channels', url: '/channels' },
+  //     { title: 'VOD', url: '/vod' },
+  //     { title: 'Series', url: '/series' },
+  //     { title: 'EPG', url: '/epg' },
+  //   ],
+  // },
+  { title: 'Stats', icon: ChartLine, url: '/stats' },
+];
 
   return (
     <div className="flex min-h-screen w-full">
@@ -311,7 +292,10 @@ function AppLayoutContent() {
                 placeholder={environment.public_ip}
               />
               <InputGroupAddon align="inline-end">
-                <Button variant="ghost">
+                <Button variant="ghost" className="cursor-pointer" onClick={() =>  copyToClipboard(environment.public_ip, {
+      successTitle: 'Success',
+      successMessage: 'Public IP copied to clipboard',
+    })}>
                   <Copy />
                 </Button>
               </InputGroupAddon>
