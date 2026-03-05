@@ -1,23 +1,23 @@
 // src/api.js (updated)
 import useAuthStore from '@/store/auth';
 import useChannelsStore from '@/store/channels';
-import useLogosStore from '@/store/logos';
-import useUserAgentsStore from '@/store/userAgents';
-import usePlaylistsStore from '@/store/playlists';
-import useEPGsStore from '@/store/epgs';
-import useStreamsStore from '@/store/streams';
-import useStreamProfilesStore from '@/store/streamProfiles';
-import useSettingsStore from '@/store/settings';
-import toast from '@/lib/toast';
 import useChannelsTableStore from '@/store/channelsTable';
-import useStreamsTableStore from '@/store/streamsTable';
-import useUsersStore from '@/store/users';
 import useConnectStore from '@/store/connect';
-import Limiter from './limiter';
+import useEPGsStore from '@/store/epgs';
+import useLogosStore from '@/store/logos';
+import usePlaylistsStore from '@/store/playlists';
+import useSettingsStore from '@/store/settings';
+import useStreamProfilesStore from '@/store/streamProfiles';
+import useStreamsStore from '@/store/streams';
+import useStreamsTableStore from '@/store/streamsTable';
+import useUserAgentsStore from '@/store/userAgents';
+import useUsersStore from '@/store/users';
+import Limiter from './utils';
 
 // Get the host lazily when needed (for SSR safety)
 function getHost() {
   if (typeof window === 'undefined') return '';
+  // return !import.meta.env.PROD ? `https://ddptv.w00t.cloud` : '';
   return !import.meta.env.PROD ? `http://${window.location.hostname}:5656` : '';
   // return !import.meta.env.PROD ? `https://${window.location.hostname}` : ''; // @TODO-v2 ngrok port
 }
@@ -1335,7 +1335,6 @@ export default class API {
   static async getEPGs() {
     try {
       const response = await request(`${getHost()}/api/epg/sources/`);
-
       return response;
     } catch (e) {
       errorNotification('Failed to retrieve EPGs', e);
@@ -1352,11 +1351,11 @@ export default class API {
     }
   }
 
-  static async getCurrentPrograms(channelIds = null) {
+  static async getCurrentPrograms(channelUUIDs = null) {
     try {
       const response = await request(`${getHost()}/api/epg/current-programs/`, {
         method: 'POST',
-        body: { channel_ids: channelIds },
+        body: { channel_uuids: channelUUIDs },
       });
 
       return response;

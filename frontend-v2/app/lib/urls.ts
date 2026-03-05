@@ -32,6 +32,7 @@ function getBaseUrlFromWindow(): string {
 
   if (!import.meta.env.PROD) {
     // Development: Use backend port
+    // return `https://ddptv.w00t.cloud`;
     return `${protocol}//${hostname}:5656`;
     // return `${protocol}//${hostname}`; // @TODO-v2 ngrok port
   }

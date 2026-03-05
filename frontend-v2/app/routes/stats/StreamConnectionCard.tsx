@@ -1,51 +1,49 @@
-import { useLocation } from 'react-router';
-import React, { useEffect, useMemo, useState } from 'react';
-import usePlaylistsStore from '../../store/playlists.jsx';
-import useSettingsStore from '../../store/settings.jsx';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardFooter } from '@/components/ui/card.js';
+import { Label } from '@/components/ui/label';
 import {
-  ChevronDown,
-  ChevronRight,
-  CirclePlay,
-  Gauge,
-  HardDriveDownload,
-  HardDriveUpload,
-  Radio,
-  SquareX,
-  Timer,
-  Users,
-  Video,
-  X,
-} from 'lucide-react';
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import API from '@/lib/api.js';
 import {
-  useDateTimeFormat,
   format,
   getNow,
   initializeTime,
   subtract,
   toFriendlyDuration,
+  useDateTimeFormat,
 } from '@/lib/date-time.js';
-import { formatBytes, formatSpeed } from '@/lib/network.js';
-import useVideoStore from '@/store/useVideoStore';
-import API from '@/lib/api.js';
+import { formatBytes, formatSpeed } from '@/lib/network';
 import toast from '@/lib/toast.js';
+import useVideoStore from '@/store/useVideoStore';
 import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardAction,
-  CardContent,
-  CardFooter,
-} from '@/components/ui/card.js';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Label } from '@/components/ui/label';
+  CirclePlay,
+  Gauge,
+  HardDriveDownload,
+  HardDriveUpload,
+  Users,
+  Video,
+  X,
+} from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { useLocation } from 'react-router';
+import usePlaylistsStore from '../../store/playlists.jsx';
+import useSettingsStore from '../../store/settings.jsx';
 import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from '@/components/ui/select';
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from '@/components/ui/drawer';
 
 // Get buffering_speed from proxy settings
 export const getBufferingSpeedThreshold = (proxySetting) => {
@@ -532,7 +530,7 @@ const StreamConnectionCard = ({
     const seconds = s % 60;
     if (hours > 0) return `${hours}:${minutes}:${seconds}`;
     if (minutes > 0) return `${minutes}:${seconds}`;
-    return `${seconds}`;
+    return `00:${seconds}`;
   };
   const bitrates = channel.bitrates || [];
   const totalBytes = channel.total_bytes || 0;
@@ -577,21 +575,21 @@ const StreamConnectionCard = ({
   }
 
   return (
-    <Card className="relative">
+    <Card className="relative card-hover">
       <div
         className="absolute inset-0 bg-cover bg-center opacity-20 blur-xl"
         style={{ backgroundImage: `url("${logoUrl || '/logo.png'}")` }}
       ></div>
-      <CardContent>
+      <CardContent className="relative">
         <div className="relative flex justify-between space-x-4">
-          <div className="bg-muted relative h-30 w-22 flex-shrink-0 overflow-hidden rounded-lg shadow-lg">
+          <div className="relative h-30 w-22 flex-shrink-0 overflow-hidden rounded-lg shadow-lg">
             <img
               className="w-full h-full object-contain rounded"
               src={logoUrl || '/logo.png'}
               style={{
                 maxWidth: '100%',
                 maxHeight: '100%',
-                objectFit: 'contain',
+                // objectFit: 'contain',
               }}
               alt="channel logo"
             />
@@ -599,13 +597,18 @@ const StreamConnectionCard = ({
 
           <div className="flex flex-1 flex-col justify-start">
             <div className="flex justify-between items-center">
-              <div className="font-medium text-sm">{channelName}</div>
+              <div className="font-bold text-sm">{channelName}</div>
 
               <div className="flex items-center">
                 <div className="flex align-right font-light text-xs">
                   {formatLiveUptime(liveUptime)}
                 </div>
-                <Button variant="ghost">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="!bg-transparent cursor-pointer"
+                  onClick={() => stopChannel(channel.channel_id)}
+                >
                   <X />
                 </Button>
               </div>
@@ -624,7 +627,7 @@ const StreamConnectionCard = ({
 
             <div className="flex pt-2 gap-2 items-center">
               <div className="space-y-1 w-full">
-                <Label htmlFor="active-stream" className="font-light text-">
+                <Label htmlFor="active-stream" className="text-xs">
                   Active Stream
                 </Label>
                 <div className="flex items-center gap-2">
@@ -652,7 +655,11 @@ const StreamConnectionCard = ({
                     </SelectContent>
                   </Select>
 
-                  <div role="button">
+                  <div
+                    role="button"
+                    className="cursor-pointer text-[var(--success)]"
+                    onClick={handlePreviewChannel}
+                  >
                     <CirclePlay size={24} />
                   </div>
                 </div>
@@ -660,40 +667,70 @@ const StreamConnectionCard = ({
             </div>
           </div>
         </div>
-      </CardContent>
 
-      <CardFooter>
-        <div className="flex gap-1">
+        <div className="flex gap-1 pt-4">
           {channel.resolution && (
-            <Badge color="red">{channel.resolution}</Badge>
+            <Badge className="bg-red-200 text-red-900 dark:bg-red-900/30 dark:text-red-200">
+              {channel.resolution}
+            </Badge>
           )}
           {channel.source_fps && (
-            <Badge color="orange">{channel.source_fps} FPS</Badge>
+            <Badge className="bg-orange-200 text-orange-900 dark:bg-orange-900/30 dark:text-orange-200">
+              {channel.source_fps} FPS
+            </Badge>
           )}
           {channel.video_codec && (
-            <Badge color="blue">{channel.video_codec.toUpperCase()}</Badge>
+            <Badge className="bg-blue-200 text-blue-900 dark:bg-blue-900/30 dark:text-blue-200">
+              {channel.video_codec.toUpperCase()}
+            </Badge>
           )}
           {channel.audio_codec && (
-            <Badge color="pink">{channel.audio_codec.toUpperCase()}</Badge>
+            <Badge className="bg-pink-200 text-pink-900 dark:bg-pink-900/30 dark:text-pink-200">
+              {channel.audio_codec.toUpperCase()}
+            </Badge>
           )}
           {channel.audio_channels && (
-            <Badge color="pink">{channel.audio_channels}</Badge>
+            <Badge className="bg-pink-200 text-pink-900 dark:bg-pink-900/30 dark:text-pink-200">
+              {channel.audio_channels}
+            </Badge>
           )}
           {channel.stream_type && (
-            <Badge color="cyan">{channel.stream_type.toUpperCase()}</Badge>
+            <Badge className="bg-cyan-200 text-cyan-900 dark:bg-cyan-900/30 dark:text-cyan-200">
+              {channel.stream_type.toUpperCase()}
+            </Badge>
           )}
           {channel.ffmpeg_speed && (
             <Badge
-              color={
+              className={
                 parseFloat(channel.ffmpeg_speed) >=
                 getBufferingSpeedThreshold(settings['proxy_settings'])
-                  ? 'green'
-                  : 'red'
+                  ? 'bg-green-200 text-green-900 dark:bg-green-900/30 dark:text-green-200'
+                  : 'bg-red-200 text-red-900 dark:bg-red-900 dark:text-red-200'
               }
             >
               {parseFloat(channel.ffmpeg_speed).toFixed(2)}x
             </Badge>
           )}
+        </div>
+      </CardContent>
+
+      <CardFooter className="py-2">
+        <div className="flex justify-between w-full text-zinc-500 dark:text-zinc-400">
+          <div className="flex items-center gap-2 text-xs">
+            <Gauge pr={5} size="22" /> {formatSpeed(bitrates.at(-1) || 0)}
+          </div>
+
+          <div className="flex">Avg: {avgBitrate}</div>
+
+          <div className="flex">
+            <HardDriveDownload size="18" />
+            {formatBytes(totalBytes)}
+          </div>
+
+          <div className="flex">
+            <Users size="18" />
+            {clientCount}
+          </div>
         </div>
       </CardFooter>
     </Card>

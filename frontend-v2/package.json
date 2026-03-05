@@ -42,6 +42,7 @@
     "react-window": "^2.2.7",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.5.0",
+    "vaul": "^1.1.2",
     "video.js": "^8.23.7",
     "yup": "^1.7.1",
     "zustand": "^5.0.11"

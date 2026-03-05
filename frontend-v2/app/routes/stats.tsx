@@ -287,7 +287,7 @@ export default function Stats({ loaderData }: Route.ComponentProps) {
         <h1 className="text-2xl tracking-tight">Active Streams</h1>
       </div>
 
-      <div className="grid gap-4 py-2 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="grid gap-4 py-2 sm:grid-cols-2 xl:grid-cols-3 px-2">
         {combinedConnections.map((connection) => {
           if (connection.type === 'stream') {
             return (

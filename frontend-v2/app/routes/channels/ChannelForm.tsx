@@ -315,12 +315,17 @@ export default function ChannelForm({ channel, isOpen, onClose }: any) {
     reset,
     control,
     formState: { errors, isSubmitting },
+    getValues,
   } = useForm({
     defaultValues,
     resolver: yupResolver(validationSchema),
   });
 
-  const onSubmit = async (values) => {
+  const onSubmit = async (e) => {
+    e.preventDefault()
+    const values = getValues()
+    console.log(values)
+
     let response;
 
     try {

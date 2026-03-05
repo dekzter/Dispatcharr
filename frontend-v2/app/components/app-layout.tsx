@@ -159,7 +159,7 @@ function AppLayoutContent() {
         <SidebarContent>
           <SidebarGroup>
             <SidebarGroupContent>
-              <SidebarMenu>
+              <SidebarMenu className="space-y-2">
                 {navItems.map((item) => {
                   // If item has sub-items, render as collapsible or dropdown
                   if (item.items) {
