@@ -89,7 +89,7 @@ export default function Channels({ loaderData }: Route.ComponentProps) {
     <>
       {/* Mobile: tab toggle, both panels stay mounted */}
       {isMobile ? (
-        <div className="flex h-full w-full flex-col">
+        <div className="flex h-full w-full max-w-full flex-col">
           <div className="flex shrink-0 border-b">
             <button
               onClick={() => setActiveTab("channels")}

@@ -1369,7 +1369,7 @@ const StreamsTable = ({ onReady }) => {
       </div>
 
       {/* Data Table */}
-      <div className="flex justify-between">
+      <div className="grid sm:grid-cols-1 xl:grid-cols-2 items-center gap-1">
         <div className="flex items-center gap-1">
           <Tooltip delayDuration={500}>
             <TooltipTrigger asChild>
@@ -1413,7 +1413,7 @@ const StreamsTable = ({ onReady }) => {
           </Tooltip>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex gap-2 sm:justify-start xl:justify-end">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
