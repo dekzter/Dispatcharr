@@ -29,7 +29,6 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
   SidebarProvider,
-  SidebarRail,
   useSidebar
 } from '@/components/ui/sidebar';
 import { useTheme } from '@/hooks/use-theme';
@@ -44,6 +43,7 @@ import {
   ChevronRight,
   Copy,
   ListOrdered,
+  Menu,
   Moon,
   Sun
 } from 'lucide-react';
@@ -108,8 +108,9 @@ export default function AppLayout() {
 
 function AppLayoutContent() {
   const { theme, toggleTheme } = useTheme();
-  const { toggleSidebar, state } = useSidebar();
+  const { toggleSidebar, state, isMobile, setOpenMobile } = useSidebar();
   const isCollapsed = state === 'collapsed';
+  const closeMobileNav = () => { if (isMobile) setOpenMobile(false); };
   const location = useLocation();
 
   const channelIds = useChannelsStore((s) => s.channelIds);
@@ -195,6 +196,7 @@ function AppLayoutContent() {
                                   <DropdownMenuItem key={subItem.title} asChild>
                                     <Link
                                       to={subItem.url}
+                                      onClick={closeMobileNav}
                                       className={
                                         isActive
                                           ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-400'
@@ -243,7 +245,7 @@ function AppLayoutContent() {
                                       asChild
                                       isActive={isActive}
                                     >
-                                      <Link to={subItem.url}>
+                                      <Link to={subItem.url} onClick={closeMobileNav}>
                                         <span>{subItem.title}</span>
                                       </Link>
                                     </SidebarMenuSubButton>
@@ -271,7 +273,7 @@ function AppLayoutContent() {
                             : ''
                         }
                       >
-                        <Link to={item.url!}>
+                        <Link to={item.url!} onClick={closeMobileNav}>
                           <item.icon className="h-4 w-4" />
                           <span>{item.title}</span>
                         </Link>
@@ -324,10 +326,22 @@ function AppLayoutContent() {
             )}
           </Button>
         </SidebarFooter>
-        <SidebarRail />
       </Sidebar>
 
       <div className="flex-1 flex flex-col">
+        {/* Mobile-only sticky top bar */}
+        <header className="md:hidden sticky top-0 z-50 flex h-12 items-center gap-3 border-b bg-background/95 backdrop-blur px-3">
+          <button
+            onClick={toggleSidebar}
+            className="flex items-center justify-center rounded-md p-1.5 hover:bg-accent transition-colors"
+            aria-label="Open menu"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
+          <img src="/logo.png" alt="Dispatcharr" className="h-6 w-6" />
+          <span className="text-sm font-medium">Dispatcharr</span>
+        </header>
+
         {/* Main Content */}
         <main className="flex-1 bg-background">
           <Outlet />
