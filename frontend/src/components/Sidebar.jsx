@@ -200,7 +200,7 @@ const Sidebar = ({ collapsed, toggleDrawer, drawerWidth, miniDrawerWidth }) => {
           },
           {
             label: 'System',
-            icon: <LucideSettings size={20} />,
+            icon: <MonitorCog size={20} />,
             paths: [
               {
                 label: 'Users',
@@ -214,7 +214,7 @@ const Sidebar = ({ collapsed, toggleDrawer, drawerWidth, miniDrawerWidth }) => {
               },
               {
                 label: 'Settings',
-                icon: <MonitorCog size={20} />,
+                icon: <LucideSettings size={20} />,
                 path: '/settings',
               },
             ],
