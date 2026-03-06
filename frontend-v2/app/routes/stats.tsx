@@ -17,9 +17,22 @@ import {
   stopClient,
   stopVODClient,
 } from '@/lib/stats.js';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import StreamConnectionCard from './stats/StreamConnectionCard';
 import useLogosStore from '@/store/logos';
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from '@/components/ui/drawer';
+import ClientGeoMap from '@/components/ClientGeoMap';
+import {X} from 'lucide-react'
+import {Button} from '@/components/ui/button'
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -27,6 +40,69 @@ export function meta({}: Route.MetaArgs) {
     { name: 'description', content: 'View active connections' },
   ];
 }
+
+ const formatLiveUptime = (secs) => {
+    const s = Math.max(0, Math.floor(secs || 0));
+    const hours = Math.floor(s / 3600);
+    const minutes = Math.floor((s % 3600) / 60);
+    const seconds = s % 60 < 10 ? `0${s % 60}` : s % 60;
+    if (hours > 0) return `${hours}:${minutes}:${seconds}`;
+    if (minutes > 0) return `${minutes}:${seconds}`;
+    return `00:${seconds}`;
+  };
+
+  const ChannelDrawerClientCard = ({ client, uptime }) => {
+    const ip = client.ip_address ?? client.channel?.ip_address ?? 'Unknown IP';
+    return (
+      <Card>
+        <CardContent>
+          <div className="flex justify-between items-center">
+            <div className="flex">{ip}</div>
+            <div className="flex">{formatLiveUptime(uptime)}</div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+const ChannelDetailsDrawer = ({ channel, clients, open, onOpenChange }) => {
+  return (
+    <Drawer direction="right" open={open} onOpenChange={onOpenChange}>
+      <DrawerContent>
+          <DrawerHeader>
+            <DrawerTitle>Channel Details</DrawerTitle>
+            <DrawerDescription>
+              {channel?.name}
+            </DrawerDescription>
+          </DrawerHeader>
+
+    <div className="flex flex-col gap-4 px-2">
+          {clients.map((client) => {
+            const key = client.client_id ?? client.id ?? JSON.stringify(client).slice(0, 8);
+            const ip = client.ip_address ?? client.channel?.ip_address ?? '64.98.117.14';
+            return (
+              <Card key={key} className="pt-2">
+                <CardContent>
+                  <div className="flex justify-between items-center">
+                    {client.ip_address || 'Unknown Client'}
+                    <Button size="icon" variant="destructive" className="!bg-transparent">
+                      <X />
+                    </Button>
+                    </div>
+                  <div className="flex items-center justify-between">
+                    <div className="font-medium text-sm">Connected:</div>
+                    <div className="flex">{formatLiveUptime(client.connected_since)}</div>
+                  </div>
+                  {/* <ClientGeoMap ip={ip} /> */}
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      </DrawerContent>
+    </Drawer>
+  );
+};
 
 export default function Stats({ loaderData }: Route.ComponentProps) {
   const channelStats = useChannelsStore((s) => s.stats);
@@ -41,6 +117,8 @@ export default function Stats({ loaderData }: Route.ComponentProps) {
   const [currentPrograms, setCurrentPrograms] = useState({});
   const [channels, setChannels] = useState({}); // id -> channel
   const [channelsByUUID, setChannelsByUUID] = useState({}); // uuid -> id
+  const [activeChannel, setActiveChannel] = useState(null);
+  const [clientDrawerOpen, setClientDrawerOpen] = useState(false);
 
   // Use refs to hold latest values without triggering effects
   const channelHistoryRef = useRef(channelHistory);
@@ -120,7 +198,7 @@ export default function Stats({ loaderData }: Route.ComponentProps) {
       if (response) {
         setChannelStats(response);
       } else {
-        console.log('API response was empty or null');
+        // console.log('API response was empty or null');
       }
     } catch (error) {
       console.error('Error fetching channel stats:', error);
@@ -138,7 +216,7 @@ export default function Stats({ loaderData }: Route.ComponentProps) {
       if (response) {
         setVodConnections(response.vod_connections || []);
       } else {
-        console.log('VOD API response was empty or null');
+        // console.log('VOD API response was empty or null');
       }
     } catch (error) {
       console.error('Error fetching VOD stats:', error);
@@ -184,14 +262,14 @@ export default function Stats({ loaderData }: Route.ComponentProps) {
   }, [fetchChannelStats, fetchVODStats]);
 
   useEffect(() => {
-    console.log('Processing channel stats:', channelStats);
+    // console.log('Processing channel stats:', channelStats);
     if (
       !channelStats ||
       !channelStats.channels ||
       !Array.isArray(channelStats.channels) ||
       channelStats.channels.length === 0
     ) {
-      console.log('No channel stats available:', channelStats);
+      // console.log('No channel stats available:', channelStats);
       // Clear clients and channel history when there are no stats
       setClients([]);
       setChannelHistory({});
@@ -209,7 +287,7 @@ export default function Stats({ loaderData }: Route.ComponentProps) {
         streamProfiles
       );
 
-      console.log('Processed active channels:', stats);
+      // console.log('Processed active channels:', stats);
 
       // Update clients based on new stats
       setClients(getClientStats(stats));
@@ -281,6 +359,11 @@ export default function Stats({ loaderData }: Route.ComponentProps) {
     return getCombinedConnections(channelHistory, vodConnections);
   }, [channelHistory, vodConnections]);
 
+  const openClientDrawer = useCallback((channel) => {
+    setActiveChannel(channel);
+    setClientDrawerOpen(true);
+  }, []);
+
   return (
     <div className="flex flex-col p-2">
       <div className="border-b w-full">
@@ -301,6 +384,7 @@ export default function Stats({ loaderData }: Route.ComponentProps) {
                 channelsByUUID={channelsByUUID}
                 channels={channels}
                 currentProgram={currentPrograms[connection.data.channel_id]}
+                openChannelClientDrawer={openClientDrawer}
               />
             );
           } else if (connection.type === 'vod') {
@@ -316,6 +400,15 @@ export default function Stats({ loaderData }: Route.ComponentProps) {
           return null;
         })}
       </div>
+
+      <ChannelDetailsDrawer
+        channel={activeChannel}
+        open={clientDrawerOpen}
+        onOpenChange={setClientDrawerOpen}
+        clients={clients.filter(
+          (c) => (c.channel?.channel_id ?? c.channel_id) === activeChannel?.channel_id
+        )}
+      />
     </div>
   );
 }

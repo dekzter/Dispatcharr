@@ -29,21 +29,13 @@ import {
   Users,
   Video,
   X,
+  SquareArrowOutUpRight,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router';
 import usePlaylistsStore from '../../store/playlists.jsx';
 import useSettingsStore from '../../store/settings.jsx';
-import {
-  Drawer,
-  DrawerClose,
-  DrawerContent,
-  DrawerDescription,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerTrigger,
-} from '@/components/ui/drawer';
+
 
 // Get buffering_speed from proxy settings
 export const getBufferingSpeedThreshold = (proxySetting) => {
@@ -178,6 +170,7 @@ const StreamConnectionCard = ({
   channelsByUUID,
   channels,
   currentProgram,
+  openChannelClientDrawer,
 }) => {
   const location = useLocation();
   const [availableStreams, setAvailableStreams] = useState([]);
@@ -525,8 +518,8 @@ const StreamConnectionCard = ({
 
   const formatLiveUptime = (secs) => {
     const s = Math.max(0, Math.floor(secs || 0));
-    const hours = Math.floor(s / 3600);
-    const minutes = Math.floor((s % 3600) / 60);
+    const hours = Math.floor(s / 3600) < 10 ? `0${Math.floor(s / 3600)}` : Math.floor(s / 3600);
+    const minutes = Math.floor((s % 3600) / 60) < 10 ? `0${Math.floor((s % 3600) / 60)}` : Math.floor((s % 3600) / 60);
     const seconds = s % 60;
     if (hours > 0) return `${hours}:${minutes}:${seconds}`;
     if (minutes > 0) return `${minutes}:${seconds}`;
@@ -597,7 +590,20 @@ const StreamConnectionCard = ({
 
           <div className="flex flex-1 flex-col justify-start">
             <div className="flex justify-between items-center">
-              <div className="font-bold text-sm">{channelName}</div>
+              <div className="flex gap-2">
+                <div className="font-bold text-sm">{channelName}</div>
+
+                <div className="flex">
+                  <Badge
+                    onClick={() => openChannelClientDrawer(channel)}
+                    className="cursor-pointer"
+                  >
+                    <Users size="18" />
+                    {clientCount}
+                    <SquareArrowOutUpRight size={12} className="ml-1" />
+                  </Badge>
+                </div>
+              </div>
 
               <div className="flex items-center">
                 <div className="flex align-right font-light text-xs">
@@ -635,17 +641,13 @@ const StreamConnectionCard = ({
                     value={
                       activeStreamId || channel.stream_id?.toString() || null
                     }
-                    onValueChange={() => {
-                      console.log(arguments);
-                      // handleStreamChange
-                    }}
+                    onValueChange={handleStreamChange}
                   >
                     <SelectTrigger id="active-stream" className="w-full">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       {streamOptions.map((option) => {
-                        console.log(option);
                         return (
                           <SelectItem key={option.value} value={option.value}>
                             {option.label}
